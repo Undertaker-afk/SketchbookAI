@@ -1,7 +1,7 @@
 {
     "include": [
-        "src/ts/**/*"
-, "src/ts/vehicles/test.js", "build/types/vehicles/index.js", "index.js"    ],
+        "src/**/*"
+, "src/ts/vehicles/test.js", "build/types/vehicles/index.js", "src/index.js"    ],
     "compilerOptions": {
         "module": "commonjs",
         "target": "es5",

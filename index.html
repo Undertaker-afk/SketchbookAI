@@ -1,95 +1,97 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-	<title>Sketchbook</title>
-    <style>
-#planet-menu {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 50%;
-    height: 50%;
-    background: white;
-    padding: 20px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-    border-radius: 10px;
-    text-align: center;
-    display: flex; /* Added line */
-    flex-direction: row; /* Added line */
-    flex-wrap: wrap; /* Added line */
-    align-items: center; /* Added line */
-    justify-content: center; /* Added line */
-}
-
-.planet-item {
-    margin: 20px; /* Adjusted line */
-    display: flex; /* Added line */
-    flex-direction: column; /* Added line */
-    align-items: center; /* Added line */
-    justify-content: center; /* Added line */
-}
-.planet-heading {
-    width: 100%; /* ensures it takes the full width of its parent */
-    text-align: center; /* centers the text horizontally */
-    color: gray;
-    /* other stylistic properties (font-size, color, etc.) as desired */
-}
-.planet-item img {
-    width: 100px; /* or any specific size, but better to use a fixed size than a percentage */
-    height: 100px; /* same as above */
-    border-radius: 50%;
-}
-
-.planet-item p {
-    margin-top: 10px;
-}
-
-.planet-menu-hidden {
-    visibility: hidden;
-}
-
-    </style>
+    <title>Sketchbook</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@3.1.6/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Solway:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
 </head>
-
-<body>
-	
-	<div id="loading-screen">
-		<div id="loading-screen-background"></div>
-		<h1 id="main-title" class="sb-font">Sketchbook 0.4</h1>
-		<div class="cubeWrap">
-			<div class="cube">
-				<div class="faces1"></div>
-				<div class="faces2"></div>     
-			</div> 
-		</div> 
-		<div id="loading-text">Loading...</div>
-	</div>
-	<div id="ui-container" style="display: none;">
-	
-		<div class="left-panel">
-			<div id="controls" class="panel-segment flex-bottom"></div>
-		</div>
-	</div>
-	<div id="planet-menu" class="planet-menu-hidden">
-		<h1 class="planet-heading">Which planet do you want to go to?</h1>
-		<div class="planet-item" id="earth">
-			<img src="https://cdn.mos.cms.futurecdn.net/yCPyoZDQBBcXikqxkeW2jJ.jpg" alt="Earth">
-			<p>Earth</p>
-		</div>
-		<div class="planet-item" id="moon">
-			<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/1200px-FullMoon2010.jpg" alt="Moon">
-			<p>Moon</p>
-		</div>
-		<!-- Add more planets as needed -->
-	</div><script src="build/sketchbook.min.js"></script>
-	<script src="index.js"></script>
-       
-	</script>
+<style>
+    .progress-circle {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #ffffff;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+    }
+    .floating-code {
+        text-align: left;
+        color: #00ff00;
+        font-family: 'Cutive Mono', monospace;
+        font-size: 14px;
+        background: linear-gradient(to top, rgba(0,255,0,1) 0px, rgba(0,255,0,0) 100px);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        overflow: hidden;
+        
+    }
+    .suggestion-bubble {
+        display: inline-block;
+        background-color: #f0f0f0;
+        padding: 5px 10px;
+        border-radius: 20px;
+        margin: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    .suggestion-bubble:hover {
+        background-color: #e0e0e0;
+    }
+</style>
+<body class="relative bg-gray-100">
+    <div id="app">
+        <div id="loading-screen">
+            <div id="loading-screen-background"></div>
+            <h1 id="main-title" class="sb-font">Sketchbook A.I.</h1>
+            <div class="cubeWrap">
+                <div class="cube">
+                    <div class="faces1"></div>
+                    <div class="faces2"></div>     
+                </div> 
+            </div> 
+            <div id="loading-text">Loading...</div>
+        </div>
+        <div id="ui-container" style="display: none;">
+            <div class="left-panel">
+                <div id="controls" class="panel-segment flex-bottom"></div>
+            </div>
+        </div>
+        <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center">
+            <div class="w-full max-w-xs relative" >
+                <div id="floating-code" class="floating-code" style="pointer-events: none;" ></div>
+                <div class="progress-circle w-6 h-6 mr-2" :class="{ hidden: !isLoading }"></div>
+                <div>
+                    <div class="relative">
+                        <input type="text" id="gpt-input" v-model="inputText" placeholder="What would you like to create?" class="input input-bordered w-full max-w-xs pr-10" @keypress.enter="sendInput()" />
+                        <button id="send-button" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent border-none" :class="{ hidden: !inputText }" @click="sendInput()">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13"></line>
+                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="suggestion-bubbles" class="mt-2">
+                <span v-for="suggestion in suggestions" :key="suggestion" class="suggestion-bubble" @click="selectSuggestion(suggestion)">{{ suggestion }}</span>
+            </div>
+        </div>
+    </div>
+    <script src="build/sketchbook.min.js"></script>
+    <script src="src/utils.js"></script>
+    <script src="src/stable3d.js"></script>
+    <script src="src/settings.js"></script>
+    <script src="src/gptapi.js"></script>
+    <script type="module" src="src/code.js"></script>
+    <script src="src/index.js"></script>
+    <script src="localSettings.js"></script>
+    <script>
+   
+    </script>
 </body>
-
 </html>

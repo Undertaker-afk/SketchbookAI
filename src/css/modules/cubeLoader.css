@@ -98,27 +98,7 @@
 	background-color: #e4e4e4;
   }
   
-  @-webkit-keyframes spin {
-	0% {
-	  -webkit-transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-			  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-	}
-	100% {
-	  -webkit-transform: rotateX(720deg) rotateY(360deg) rotateZ(0deg);
-			  transform: rotateX(720deg) rotateY(360deg) rotateZ(0deg);
-	}
-  }
-  
-  @keyframes spin {
-	0% {
-	  -webkit-transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-			  transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
-	}
-	100% {
-	  -webkit-transform: rotateX(720deg) rotateY(360deg) rotateZ(0deg);
-			  transform: rotateX(720deg) rotateY(360deg) rotateZ(0deg);
-	}
-  }
+
   @-webkit-keyframes bouncy {
 	/* up */
 	0% {
