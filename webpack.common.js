@@ -2,13 +2,14 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        app: './src/ts/sketchbook.ts'
+        app: './src/ts/sketchbook.js'
     },
     output: {
         filename: './build/sketchbook.min.js',
         library: 'Sketchbook',
         libraryTarget: 'umd',
-        path: path.resolve(__dirname)
+        path: path.resolve(__dirname),
+        globalObject: 'this'
     },
     resolve: {
         alias: {
