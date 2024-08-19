@@ -26,7 +26,7 @@ function createProxy(obj, path = '', depth = 2) {
                         return true;
                     } else {
                         snapshot[path + ".length"] = target.length;
-                        if (!target[property]) return true;
+                        if (target[property] === undefined) return true;
                     }
                 }
                 if (!(fullPath in snapshot)) {
