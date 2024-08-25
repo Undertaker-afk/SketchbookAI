@@ -25,6 +25,8 @@ import {Wheel} from './vehicles/Wheel';
 globalThis.Wheel = Wheel;
 import {VehicleSeat} from './vehicles/VehicleSeat';
 globalThis.VehicleSeat = VehicleSeat;
+import {SeatType} from './enums/SeatType';
+globalThis.SeatType = SeatType;
 import {VehicleDoor} from './vehicles/VehicleDoor';
 globalThis.VehicleDoor = VehicleDoor;
 
@@ -66,3 +68,4 @@ globalThis.VectorSpringSimulator = VectorSpringSimulator;
 
 import { CAnims } from './enums/CharacterAnimations';
 globalThis.CAnims = CAnims;
+globalThis.CarPrototype = Car.prototype

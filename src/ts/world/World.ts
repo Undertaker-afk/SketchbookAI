@@ -304,10 +304,16 @@ export class World
 		this.timeScaleTarget = value;
 	}
 
-	public add(worldEntity: IWorldEntity): void
+	public add(worldEntity: IWorldEntity|any): void
 	{
-		worldEntity.addToWorld(this);
-		this.registerUpdatable(worldEntity);
+		if(worldEntity.addToWorld)
+		{
+			worldEntity.addToWorld(this);
+			this.registerUpdatable(worldEntity);
+		}
+		else
+			this.graphicsWorld.add(worldEntity);
+		
 	}
 
 	public registerUpdatable(registree: IUpdatable): void

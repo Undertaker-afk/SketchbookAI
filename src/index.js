@@ -36,14 +36,19 @@ let chat = {
         document.addEventListener('pointerlockchange', () => this.isCursorLocked = !!document.pointerLockElement);
         //globalThis.world = new World();
         //await world.initialize('build/assets/world.glb');        
-        Save();
-        if (!this.variant.content)
-            await this.Clear();
+        setTimeout(() => {
+            if (!this.variant.content)
+                this.Clear();
+            Save();
+            vue.$watch(() => this.params.lastText, (newValue) => {
+                document.title = newValue;
+            });
+        },100
+        );
+        
         
         //Eval(this.variant.files[0].content);
-        vue.$watch(() => this.params.lastText, (newValue) => {
-            document.title = newValue;
-        });
+        
         
     },
     onClickError(){
@@ -57,7 +62,7 @@ let chat = {
     async Clear(){
         this.variant.content='';
         this.variant.files = [{ name: 'script.js', content: await fetch('src/code.js').then(response => response.text()) }];
-        Load();
+        
     },
     floatingCode: '',
     async sendInput() {

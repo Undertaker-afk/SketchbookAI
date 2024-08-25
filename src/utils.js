@@ -354,28 +354,28 @@ function AutoScale(gltf, approximateScaleInMeters = 5) {
 }
 
 function Object3DToHierarchy(gltf) {
-    function buildHierarchy(object, indent = '', parentMatrix = new THREE.Matrix4()) {
-        const currentMatrix = new THREE.Matrix4().multiplyMatrices(parentMatrix, object.matrix);
-        
+    function buildHierarchy(object, indent = '') {
         const boundingBox = new THREE.Box3().setFromObject(object);
         const center = boundingBox.getCenter(new THREE.Vector3());
         const size = boundingBox.getSize(new THREE.Vector3());
         
-        center.applyMatrix4(currentMatrix);
         
-        let result = `${indent}${object.name}`;
-        
-        result += ` | Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`;
-        if (size.x > 0 || size.y > 0 || size.z > 0) {
-            result += `, Size: (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`;
+        let result = `\n${indent}${object.name} `;
+        result +=  `Position: (${object.position.x.toFixed(2)}, ${object.position.y.toFixed(2)}, ${object.position.z.toFixed(2)})`
+             
+        if (size.x !== 0 || size.y !== 0 || size.z !== 0) {
+            result += ` Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`;
+            result += ` Size: (${size.x.toFixed(2)}, ${size.y.toFixed(2)}, ${size.z.toFixed(2)})`;
         }
         
-        result += '\n';
+        
+        if (Object.keys(object.userData).length > 0)  result += `\n${indent}  UserData: ${JSON.stringify(object.userData, null, 2).replace(/\n/g, '\n' + indent + '  ')}`;
+        
         
         if (object.children && object.children.length > 0) {
             indent += '  ';
             object.children.forEach(child => {
-                result += buildHierarchy(child, indent, currentMatrix);
+                result += buildHierarchy(child, indent);
             });
         }
         
