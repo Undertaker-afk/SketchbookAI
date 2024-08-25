@@ -29,7 +29,7 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 	public help: THREE.AxesHelper;
 	public collision: CANNON.Body;
 	public materials: THREE.Material[] = [];
-	public spawnPoint: THREE.Object3D;
+	public spawnPoint: THREE.Object3D = new THREE.Object3D();
 	private modelContainer: THREE.Group;
 
 	private firstPerson: boolean = false;
@@ -54,9 +54,12 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 
 		// Read GLTF
 		if(gltf.initCar)
-			gltf.initCar.call(this);
+			gltf.initCar(this,gltf);
 		else
 			this.readVehicleData(gltf);
+
+		
+		
 
 		this.modelContainer = new THREE.Group();
 		this.add(this.modelContainer);
@@ -284,6 +287,9 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 
 	public setPosition(x: number, y: number, z: number): void
 	{
+		if (this.spawnPoint.position.lengthSq() === 0) {
+			this.spawnPoint.position.set(x, y, z);
+		}
 		this.collision.position.x = x;
 		this.collision.position.y = y;
 		this.collision.position.z = z;

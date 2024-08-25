@@ -26,7 +26,9 @@ async function Eval(...contentArray)
         .replace(/\b(let|const)\s+(\w+)\s*=/g, 'var $2 = globalThis.$2 =')        
         + "\n})();"
         //+ ";debugger;"
-    console.log(code);
+        
+    if (code != chat.variant.files[0].content)
+        console.log(code);
     if(content.includes("world.update = "))
         throw new Error("direct assign world.update = function(){} is not allowed, use extendMethod");
     lastEvalCode = code;

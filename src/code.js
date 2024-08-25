@@ -28,20 +28,61 @@ player.setPosition(-2.82, 14.8, -2.88);
 world.add(player);
 player.takeControl();
 
-
-
-
 let carModel = await loader.loadAsync('build/assets/car.glb');
-carModel.initCar = function () {
-    let car = this;
+
+/*
+- vehicle
+  - seats
+    - seat_1
+    - seat_3
+    - seat_2
+    - seat_4
+  - entrances
+    - entrance_1
+    - entrance_3
+    - entrance_4
+    - entrance_2
+  - objects
+    - Empty
+    - Cube006
+    - Cube002
+    - Sphere
+    - Sphere001
+    - Sphere002
+    - Sphere004
+    - Sphere007
+    - Sphere003
+    - Sphere005
+    - Sphere006
+    - Sphere008
+    - Sphere009
+    - Sphere010
+    - Sphere011
+  - body
+    - Steer_parent
+      - Steering_wheel
+    - door_1
+    - door_2
+    - door_3
+    - door_4
+  - wheels
+    - wheel_fl
+    - Cylinder001
+    - wheel_fr
+    - wheel
+*/
+
+/* CRITICAL: Uncomment and assign correct objects to seats and wheels immediately!
+carModel.initCar = function (car,carModel) {
+    
     car.setPosition(-2.37, 14.86, -4.03);
 
     // Set up seats
     car.seats = [
-        new VehicleSeat(car, carModel.scene.getObjectByName('seat_1'), carModel),
-        new VehicleSeat(car, carModel.scene.getObjectByName('seat_2'), carModel),
-        new VehicleSeat(car, carModel.scene.getObjectByName('seat_3'), carModel),
-        new VehicleSeat(car, carModel.scene.getObjectByName('seat_4'), carModel)
+        new VehicleSeat(car, carModel.scene., carModel),
+        new VehicleSeat(car, carModel.scene., carModel),
+        new VehicleSeat(car, carModel.scene., carModel),
+        new VehicleSeat(car, carModel.scene., carModel)
     ];
 
     // Connect seats
@@ -52,10 +93,10 @@ carModel.initCar = function () {
 
     // Set up wheels
     car.wheels = [
-        new Wheel(carModel.scene.getObjectByName('wheel_fl')),
-        new Wheel(carModel.scene.getObjectByName('wheel_fr')),
-        new Wheel(carModel.scene.getObjectByName('Cylinder001')),
-        new Wheel(carModel.scene.getObjectByName('wheel'))
+        new Wheel(carModel.scene.),
+        new Wheel(carModel.scene.),
+        new Wheel(carModel.scene.),
+        new Wheel(carModel.scene.),
     ];
 
     // Set wheel properties
@@ -89,6 +130,9 @@ carModel.initCar = function () {
         }
     });
 }
+*/
 let car = new Car(carModel);
 
+car.setPosition(-2.37, 14.86, -4.03);
 world.add(car);
+
