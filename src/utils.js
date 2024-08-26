@@ -124,46 +124,6 @@ function Reset() {
     world.timeScaleTarget=1
 }
 
-function loadModelWithPhysics({ glbUrl, pos, mass = 1 }) {
-    return new Promise((resolve, reject) => {
-        new GLTFLoader().load(glbUrl, (gltf) => {
-            const model = gltf.scene;
-
-            const boundingBox = new THREE.Box3().setFromObject(model);
-            const size = new THREE.Vector3().copy(boundingBox.getSize(new THREE.Vector3())).multiplyScalar(0.5);
-            const center = new THREE.Vector3();
-            boundingBox.getCenter(center);
-
-            class ModelWrapper extends THREE.Object3D {
-                updateOrder = 0;
-                collider = new BoxCollider({
-                    mass: mass,
-                    position: new THREE.Vector3().copy(pos).add(center),
-                    size: size,
-                    friction: 0.3
-                });
-
-                update() {
-                    this.position.copy(Utils.threeVector(this.collider.body.position));
-                    this.quaternion.copy(Utils.threeQuat(this.collider.body.quaternion));
-                }
-            }
-
-            const modelWrapper = new ModelWrapper();
-       
-            model.position.copy(center.negate());
-            modelWrapper.add(model);
-            
-            world.graphicsWorld.add(modelWrapper);
-            world.physicsWorld.add(modelWrapper.collider.body);
-            world.registerUpdatable(modelWrapper);
-
-            resolve(modelWrapper);
-        }, undefined, (error) => {
-            reject(error);
-        });
-    });
-}
 
 if (!navigator.serviceWorker && !window.location.hostname.startsWith('192')) {
     alert("Error: Service worker is not supported");
@@ -328,7 +288,7 @@ GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError, approxima
     });
 };
 
-function AutoScale(gltf, approximateScaleInMeters = 5,setpivot=1) {
+function AutoScale({gltf, approximateScaleInMeters = 5,setpivot=0}) {
     const model = gltf.scene;
     const boundingBox = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
@@ -339,11 +299,11 @@ function AutoScale(gltf, approximateScaleInMeters = 5,setpivot=1) {
     let scaleFactor = approximateScaleInMeters / maxDimension;
 
     // Determine if we need to scale by 1, 100, or 1000
-    if (maxDimension > approximateScaleInMeters * 100) {
+    if (maxDimension > approximateScaleInMeters * 100 * 3) {
         scaleFactor = 0.001;
-    } else if (maxDimension > approximateScaleInMeters * 10) {
+    } else if (maxDimension > approximateScaleInMeters * 10 * 3) {
         scaleFactor = 0.01;
-    } else if (maxDimension > approximateScaleInMeters) {
+    } else if (maxDimension > approximateScaleInMeters * 3) {
         scaleFactor = 0.1;
     } else {
         scaleFactor = 1;
@@ -376,7 +336,7 @@ function Object3DToHierarchy(gltf) {
         
         
         let result = `\n${indent}${object.name} `;
-        result +=  `Position: (${object.position.x.toFixed(2)}, ${object.position.y.toFixed(2)}, ${object.position.z.toFixed(2)})`
+        result +=  `(${object.position.x.toFixed(2)}, ${object.position.y.toFixed(2)}, ${object.position.z.toFixed(2)})`
              
         if (size.x !== 0 || size.y !== 0 || size.z !== 0) {
             result += ` Center: (${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)})`;
@@ -384,7 +344,7 @@ function Object3DToHierarchy(gltf) {
         }
         
         
-        if (Object.keys(object.userData).length > 0)  result += `\n${indent}  UserData: ${JSON.stringify(object.userData, null, 2).replace(/\n/g, '\n' + indent + '  ')}`;
+        //if (Object.keys(object.userData).length > 0)  result += `\n${indent}  UserData: ${JSON.stringify(object.userData, null, 2).replace(/\n/g, '\n' + indent + '  ')}`;
         
         
         if (object.children && object.children.length > 0) {

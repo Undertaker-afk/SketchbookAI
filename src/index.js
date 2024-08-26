@@ -46,7 +46,7 @@ let chat = {
         vue.$watch(() => this.params.lastText, (newValue) => {
             document.title = newValue;
         });
-
+        //world.timeScaleTarget=0
         //Eval(this.variant.files[0].content);
         
         
@@ -138,7 +138,7 @@ let chat = {
                 
             }));
             
-
+            console.log(chat.floatingCode)
             if (this.messages[this.messages.length - 1]?.user != this.params.lastText) {
                 this.messages.push({ user: this.params.lastText });
             }

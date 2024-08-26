@@ -1,25 +1,22 @@
 async function EvalWithDebug(...content) {
     try {
-        await Eval(...content);
+        Reset();
+        await new Promise(resolve => setTimeout(resolve, 0));
+        await Eval(content.join('\n'));
         if (chat.variant.lastError)
             throw chat.variant.lastError;
     } catch (e) {        
-        console.error(e);
-        await chat.switchVariant(0, false);
-        chat.variants[0].lastError = e;
+        console.error(e);        
         return {error: e};
     }
     return {};
 }
 
 let lastEvalCode = '';
-async function Eval(...contentArray) 
+async function Eval(content) 
 {   
-    Reset();
-    await new Promise(resolve => setTimeout(resolve, 100));
     chat.variant.lastError = '';
     
-    var content = contentArray.join('\n');
     
     var code = "(async () => {\n" + content
         .replace(/^.*(?:new World\(|world\.initialize).*$\n?/gm, '')
@@ -57,6 +54,13 @@ console.error = (...args) => {
         toString() {
             return this.message;
         }
+    }
+    if (chat.currentVariant != 0)
+    {
+        chat.switchVariant(0, false).then(() => {
+            chat.variants[0].lastError = e;
+        });
+        
     }
     originalConsoleError(...args);
 };

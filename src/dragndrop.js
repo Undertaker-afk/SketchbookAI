@@ -30,16 +30,16 @@
                 const intersectionPoint = intersects[0].point;
                 var code = await GetSpawnGLBCode(fileName,intersectionPoint );
                 chat.variant.files[0].content += code;
-                Eval(chat.variant.files[0].content);
+                Eval(code);
 
             };
             reader.readAsArrayBuffer(file);
         } else if (file && file.name.endsWith('.js')) {
             const reader = new FileReader();
             reader.onload = async (event) => {
-                await Eval(chat.params.code, event.target.result);
+                chat.variant.files[0].content += event.target.result;
+                await Eval(event.target.result);
             };
-            reader.readAsText(file);
             reader.readAsText(file);
         } else if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -96,29 +96,36 @@ async function GetSpawnGLBCode(fileName, intersectionPoint) {
     const animations = gltf.animations;
     let isSkinnedMesh = false;
     gltf.scene.traverse(a => isSkinnedMesh ||= a instanceof THREE.SkinnedMesh);
-    let animationsCode = '';
+    
     const modelName = fileName.split('.').slice(0, -1).join('_').replace(/[^a-zA-Z0-9_]/g, '');
-    if (animations && animations.length > 0) {
-        animationsCode = '                // CRITICAL: Uncomment and assign correct CAnims to each animation immediately!';
-        animations.forEach((clip, index) => {
-            animationsCode += `
-                //if (a.name === "${clip.name}") a.name = `;
-        });
-    }
-    let code = `
+    let animationsCode = animations && animations.length > 0 ? `
+            gltf.animations.forEach(a => {
+                // CRITICAL: Uncomment and assign correct CAnims to each animation immediately!
+                ${animations.map((clip, index) => `                    if (a.name === "${clip.name}") a.name = CAnims.${clip.name};`).join('\n')}
+            });
+        ` : '';
+        
+    let code = `    
+/* ${modelName}Model hierarchy:
+${Object3DToHierarchy(gltf)}
+*/
 let ${modelName}Model = await new Promise((resolve, reject) => { 
     new GLTFLoader().load("${fileName}", 
         gltf => {
-            gltf.animations.forEach(a => {
 ${animationsCode}
-            });
-            AutoScale(gltf, 5);
+            
             resolve(gltf);
         });
 });
+//CRITICAL: Uncomment and assign correct scale immediately!
+//AutoScale({gltf:${modelName}Model, approximateScaleInMeters: 5});
 `;
     if (isSkinnedMesh) code += `
 let ${modelName} = new Character(${modelName}Model);
+//CRITICAL: Uncomment and assign hands immediately!
+//${modelName}.lhand = 
+//${modelName}.rhand = 
+
 ${modelName}.setPosition(${intersectionPoint.x.toFixed(2)}, ${intersectionPoint.y.toFixed(2)}, ${intersectionPoint.z.toFixed(2)});
 world.add(${modelName});
 `;
@@ -126,6 +133,13 @@ world.add(${modelName});
     else code += `
 ${modelName}Model.scene.position.copy(${VectorToString(intersectionPoint)});
 world.graphicsWorld.add(${modelName}Model.scene);
+/*
+const ${modelName}Model = new TrimeshCollider(${modelName}Model.scene, {
+        position: ${modelName}Model.scene.position,
+        rotation: ${modelName}Model.scene.quaternion
+    });
+world.physicsWorld.add(${modelName}Model.body);
+*/
 `;
 
 

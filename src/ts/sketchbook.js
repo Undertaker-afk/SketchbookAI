@@ -49,6 +49,8 @@ import { World } from './world/World';
 globalThis.World = World;
 import { BoxCollider } from './physics/colliders/BoxCollider';
 globalThis.BoxCollider = BoxCollider;
+import { TrimeshCollider } from './physics/colliders/TrimeshCollider';
+globalThis.TrimeshCollider = TrimeshCollider;
 
 import * as Utils from './core/FunctionLibrary';
 globalThis.Utils = Utils;

@@ -137,3 +137,47 @@ function initCar(car, carModel, h = 0.45) {
         }
     });
 }
+
+
+
+function loadModelWithPhysics({ glbUrl, pos, mass = 1 }) {
+    return new Promise((resolve, reject) => {
+        new GLTFLoader().load(glbUrl, (gltf) => {
+            const model = gltf.scene;
+
+            const boundingBox = new THREE.Box3().setFromObject(model);
+            const size = new THREE.Vector3().copy(boundingBox.getSize(new THREE.Vector3())).multiplyScalar(0.5);
+            const center = new THREE.Vector3();
+            boundingBox.getCenter(center);
+
+            class ModelWrapper extends THREE.Object3D {
+                updateOrder = 0;
+                collider = new BoxCollider({
+                    mass: mass,                    
+                    size: size,
+                    friction: 0.3
+                });
+                setPosition(pos) {
+                    this.collider.body.position.copy(Utils.cannonVector(pos));
+                }
+                update() {
+                    this.position.copy(Utils.threeVector(this.collider.body.position));
+                    this.quaternion.copy(Utils.threeQuat(this.collider.body.quaternion));
+                }
+            }
+
+            const modelWrapper = new ModelWrapper();
+       
+            model.position.copy(center.negate());
+            modelWrapper.add(model);
+            
+            world.graphicsWorld.add(modelWrapper);
+            world.physicsWorld.add(modelWrapper.collider.body);
+            world.registerUpdatable(modelWrapper);
+
+            resolve(modelWrapper);
+        }, undefined, (error) => {
+            reject(error);
+        });
+    });
+}
