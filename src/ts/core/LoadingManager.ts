@@ -5,6 +5,9 @@ import { Scenario } from '../world/Scenario';
 import Swal from 'sweetalert2';
 import { World } from '../world/World';
 
+
+
+
 export class LoadingManager
 {
 	public firstLoad: boolean = true;
@@ -17,6 +20,7 @@ export class LoadingManager
 	constructor(world: World)
 	{
 		this.world = world;
+		
 		this.gltfLoader = new GLTFLoader();
 
 		this.world.setTimeScale(0);

@@ -39,6 +39,7 @@ let chat = {
         while (!globalThis.player) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
+		globalThis.SaveReset?.();
 
         if (!this.variant.content)
             this.Clear();

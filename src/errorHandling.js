@@ -17,13 +17,20 @@ async function Eval(content)
 {   
     chat.variant.lastError = '';
     
-    
+    var removedPlayer = content.includes("let playerModel = globalThis.playerModel = await loader.loadAsync('build/assets/boxman.glb')");
+
     var code = "(async () => {\n" + content
         .replace(/^.*(?:new World\(|world\.initialize).*$\n?/gm, '')
         .replace(/\b(let|const)\s+(\w+)\s*=/g, 'var $2 = globalThis.$2 =')        
         + "\n})();"
         //+ ";debugger;"
         
+    if(removedPlayer)
+        code = code.replace(/^.*(?:let playerModel = globalThis\.playerModel = await loader\.loadAsync\('build\/assets\/boxman\.glb'\);|var player = globalThis\.player = new Character\(playerModel\);|world\.add\(player\);).*$\n?/gm, '')
+//    else
+  //      world.remove(player);
+
+    
     if (code != chat.variant.files[0].content)
         console.log(code);
     if(content.includes("world.update = "))

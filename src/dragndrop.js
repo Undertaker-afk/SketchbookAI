@@ -100,8 +100,9 @@ async function GetSpawnGLBCode(fileName, intersectionPoint) {
     const modelName = fileName.split('.').slice(0, -1).join('_').replace(/[^a-zA-Z0-9_]/g, '');
     let animationsCode = animations && animations.length > 0 ? `
             gltf.animations.forEach(a => {
-                // CRITICAL: Uncomment and assign correct CAnims to each animation immediately!
-                ${animations.map((clip, index) => `                    if (a.name === "${clip.name}") a.name = CAnims.${clip.name};`).join('\n')}
+                /* CRITICAL: Uncomment and assign correct CAnims to each animation immediately!
+                ${animations.map((clip, index) => `                    if (a.name === "${clip.name}") a.name = CAnims.`).join('\n')}
+                */
             });
         ` : '';
         
@@ -117,12 +118,11 @@ ${animationsCode}
             resolve(gltf);
         });
 });
-//CRITICAL: Uncomment and assign correct scale immediately!
-//AutoScale({gltf:${modelName}Model, approximateScaleInMeters: 5});
+
 `;
     if (isSkinnedMesh) code += `
 let ${modelName} = new Character(${modelName}Model);
-//CRITICAL: Uncomment and assign hands immediately!
+//CRITICAL: Uncomment and assign hands immediately! Use ${modelName}Model hierarchy to find the correct bones
 //${modelName}.lhand = 
 //${modelName}.rhand = 
 
@@ -131,6 +131,8 @@ world.add(${modelName});
 `;
 
     else code += `
+//CRITICAL: Uncomment and assign correct scale immediately!
+//AutoScale({gltfScene:${modelName}Model.scene, approximateScaleInMeters: 5});
 ${modelName}Model.scene.position.copy(${VectorToString(intersectionPoint)});
 world.graphicsWorld.add(${modelName}Model.scene);
 /*

@@ -39,7 +39,18 @@ import { KeyBinding } from './core/KeyBinding';
 globalThis.KeyBinding = KeyBinding;
 
 globalThis.THREE = THREEImport;
+for (const key in THREEImport) {
+    if (!key.startsWith('Math')) {
+        globalThis[key] = THREEImport[key];
+    }
+    else
+    {
+        globalThis["Mathf"] = THREEImport[key];
+    }
+}
 globalThis.CANNON = CANNONImport;
+Object.assign(globalThis, CANNONImport);
+
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 globalThis.GLTFLoader = GLTFLoader;
 import { LoadingManager } from './core/LoadingManager';

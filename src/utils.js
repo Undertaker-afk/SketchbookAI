@@ -264,32 +264,34 @@ function getSimilarityScore(str1, str2) {
 }
 
 
+THREE.Cache.enabled=true;
 
-// Override GLTFLoader.prototype.load to handle fallback
-const originalLoad = GLTFLoader.prototype.load;
-GLTFLoader.prototype.load = function(url, onLoad, onProgress, onError, approximateScaleInMeters = 5) {
-    originalLoad.call(this, url, onLoad, onProgress, (error) => {
-        console.warn(`Failed to load ${url}, attempting to load fallback.`);
-        originalLoad.call(this, 'notfound.glb', onLoad, onProgress, onError);
-        
-        // Show picker for GLB file
-        const fileName = url.split('/').pop().split('.')[0];
-        picker.openModelPicker(fileName, async (downloadUrl) => {
-            const response = await fetch(downloadUrl);
-            const arrayBuffer = await response.arrayBuffer();
-            navigator.serviceWorker.controller.postMessage({
-                action: 'uploadFiles',
-                files: [{ name: url, buffer: arrayBuffer }]
+(function () {
+    // Override GLTFLoader.prototype.load to handle fallback
+    const originalLoad = GLTFLoader.prototype.load;
+    GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
+        originalLoad.call(this, url, onLoad, onProgress, (error) => {
+            console.warn(`Failed to load ${url}, attempting to load fallback.`);
+            originalLoad.call(this, 'notfound.glb', onLoad, onProgress, onError);
+
+            // Show picker for GLB file
+            const fileName = url.split('/').pop().split('.')[0];
+            picker.openModelPicker(fileName, async (downloadUrl) => {
+                const response = await fetch(downloadUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                navigator.serviceWorker.controller.postMessage({
+                    action: 'uploadFiles',
+                    files: [{ name: url, buffer: arrayBuffer }]
+                });
+                await new Promise(resolve => setTimeout(resolve, 100));
+                chat.switchVariant(chat.currentVariant);
             });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            chat.switchVariant(chat.currentVariant);
         });
+    };
+})();
 
-    });
-};
-
-function AutoScale({gltf, approximateScaleInMeters = 5,setpivot=0}) {
-    const model = gltf.scene;
+function AutoScale({ gltfScene, approximateScaleInMeters = 5}) {
+    const model = gltfScene;
     const boundingBox = new THREE.Box3().setFromObject(model);
     const size = new THREE.Vector3();
     boundingBox.getSize(size);
@@ -312,20 +314,23 @@ function AutoScale({gltf, approximateScaleInMeters = 5,setpivot=0}) {
     // Apply the calculated scale to the model
     model.scale.setScalar(scaleFactor);
 
-    if (setpivot) {
-        // Center the model horizontally and place it on the floor
-        const center = boundingBox.getCenter(new THREE.Vector3());
-        model.position.x -= center.x*scaleFactor;
-        model.position.z -= center.z*scaleFactor;
-        model.position.y -= boundingBox.min.y*scaleFactor;
+    world.render(world);
+}
 
-        // Create a new parent object and add the model to it
-        const parent = new THREE.Object3D();
-        parent.add(model);
+function setPivot(gltf) {
+    const model = gltf.Scene;
+    const boundingBox = new THREE.Box3().setFromObject(model);
+    const center = boundingBox.getCenter(new THREE.Vector3());
+    model.position.x -= center.x * gltf.scene.scale.x;
+    model.position.z -= center.z * gltf.scene.scale.z;
+    model.position.y -= boundingBox.min.y * gltf.scene.scale.y;
 
-        // Replace the original scene with the new parent
-        gltf.scene = parent;
-    }
+    // Create a new parent object and add the model to it
+    const parent = new THREE.Object3D();
+    parent.add(model);
+
+    // Replace the original scene with the new parent
+    gltf.scene = parent;
 }
 
 function Object3DToHierarchy(gltf) {
@@ -360,3 +365,4 @@ function Object3DToHierarchy(gltf) {
     let rootObject = gltf.scene;
     return buildHierarchy(rootObject);
 }
+

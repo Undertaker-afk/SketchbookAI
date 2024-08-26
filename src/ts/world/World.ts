@@ -150,9 +150,7 @@ export class World
 		// Initialization
 		this.inputManager = new InputManager(this, this.renderer.domElement);
 		this.cameraOperator = new CameraOperator(this, this.camera, this.params.Mouse_Sensitivity);
-		this.sky = new Sky(this);
-		
-		// Load scene if path is supplied
+		this.sky = new Sky(this);				
 	
 	}
 	async initialize(worldScenePath?: any) {
@@ -187,9 +185,13 @@ export class World
 				buttonsStyling: false
 			});
 		}
-
-		this.render(this);
-		globalThis.SaveReset?.();
+		const animate = () => {
+			setTimeout(() => {
+				requestAnimationFrame(animate);
+				this.render(this);
+			}, 1000 / 60); // 20 FPS
+		};
+		animate();
 	}
 
 	// Update
@@ -266,10 +268,9 @@ export class World
 	{
 		this.requestDelta = this.clock.getDelta();
 
-		requestAnimationFrame(() =>
-		{
-			world.render(world);
-		});
+		
+
+		//requestAnimationFrame(() =>{world.render(world);});
 
 		// Getting timeStep
 		let unscaledTimeStep = (this.requestDelta + this.renderDelta + this.logicDelta) ;

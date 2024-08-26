@@ -181,3 +181,9 @@ function loadModelWithPhysics({ glbUrl, pos, mass = 1 }) {
         });
     });
 }
+THREE.Object3D.prototype.setParent = function (child) {
+    const worldScale = child.getWorldScale(new THREE.Vector3());
+  
+    this.add(child);
+    child.scale.copy(worldScale.divide(this.getWorldScale(new THREE.Vector3())));
+};
