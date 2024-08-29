@@ -58,6 +58,9 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	public defaultRotationSimulatorMass: number = 10;
 	public rotationSimulator: RelativeSpringSimulator;
 	public viewVector: THREE.Vector3;
+	 /**
+     * @internal
+     */
 	public actions: { [action: string]: KeyBinding };
 	public characterCapsule: CapsuleCollider;
 	

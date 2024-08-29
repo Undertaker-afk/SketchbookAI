@@ -10,7 +10,8 @@ async function Eval(content)
 
     var code = //"(async () => {\n" +
      content
-        .replace(/^.*(?:new World\(|world\.initialize).*$\n?/gm, '')
+        .replace(/^.*(?:new World\().*$\n?/gm, '')
+        .replace(/^.*(?:world\.initialize).*$\n?/gm, '')
         .replace(/world\.render\(world\);/g, '')
         .replace(/\b(let|const)\s+(\w+)\s*=/g, 'var $2 = globalThis.$2 =')        
         + (settings.enableBreakpoints ? ";debugger;" : "")

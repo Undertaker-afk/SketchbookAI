@@ -1,10 +1,11 @@
-
 function extendMethod(object, methodName, extension) {
-    const originalMethod = object[methodName];
+    const originalMethod = object[methodName].bind(object);
+    snapshot.reset.push(() => {
+        object[methodName] = originalMethod;
+    });
     object[methodName] = function (...args) {
-        const result = originalMethod.apply(this, args);
-        extension.apply(this, args);
-        return result;
+        originalMethod(...args);
+        return extension.call(this, ...args);
     };
 }
 
@@ -150,78 +151,80 @@ function SetPivotCenter(gltf) {
 }
 
 
-
-function loadModelWithPhysics({ glbUrl, pos, mass = 1 }) {
-    return new Promise((resolve, reject) => {
-        new GLTFLoader().load(glbUrl, (gltf) => {
-            const model = gltf.scene;
-
-            const boundingBox = new THREE.Box3().setFromObject(model);
-            const size = new THREE.Vector3().copy(boundingBox.getSize(new THREE.Vector3())).multiplyScalar(0.5);
-            const center = new THREE.Vector3();
-            boundingBox.getCenter(center);
-
-            class ModelWrapper extends THREE.Object3D {
-                updateOrder = 0;
-                collider = new BoxCollider({
-                    mass: mass,                    
-                    size: size,
-                    friction: 0.3
-                });
-                setPosition(pos) {
-                    this.collider.body.position.copy(Utils.cannonVector(pos));
-                }
-                update() {
-                    this.position.copy(Utils.threeVector(this.collider.body.position));
-                    this.quaternion.copy(Utils.threeQuat(this.collider.body.quaternion));
-                }
-            }
-
-            const modelWrapper = new ModelWrapper();
-       
-            model.position.copy(center.negate());
-            modelWrapper.add(model);
-            
-            world.graphicsWorld.add(modelWrapper);
-            world.physicsWorld.add(modelWrapper.collider.body);
-            world.registerUpdatable(modelWrapper);
-
-            resolve(modelWrapper);
-        }, undefined, (error) => {
-            reject(error);
+class BaseObject extends THREE.Object3D {
+    constructor(model) {
+        super();
+        expose(model);
+        const bbox = new THREE.Box3().setFromObject(model);
+        const size = bbox.getSize(new THREE.Vector3()).multiplyScalar(0.5);
+        const center = new THREE.Vector3();
+        bbox.getCenter(center);
+        model.position.copy(center.negate());
+        this.add(model);
+        this.body = new CANNON.Body({
+            mass: 1,
+            position: Utils.cannonVector(center),
+            shape: new CANNON.Box(new CANNON.Vec3(size.x, size.y, size.z)),
+            material: new CANNON.Material('baseObjectMaterial')
         });
-    });
+        this.body.friction = 0.3;
+    }
+    updateOrder = 0;
+
+    setPosition(pos) {
+        this.body.position.copy(Utils.cannonVector(pos));
+    }
+    update() {
+        this.position.copy(Utils.threeVector(this.body.position));
+        this.quaternion.copy(Utils.threeQuat(this.body.quaternion));
+    }
+    addToWorld(world) {
+        world.graphicsWorld.add(this);
+        world.physicsWorld.add(this.body);
+    }
+    removeFromWorld(world) {
+        world.graphicsWorld.remove(this);
+        world.physicsWorld.remove(this.body);
+    }
 }
+
+
 THREE.Object3D.prototype.addWithPreservedScale = function (child) {
     child.updateWorldMatrix(true, true);
+    this.updateWorldMatrix(true, true);
     const childWorldScale = child.getWorldScale();
     const parentWorldScale = this.getWorldScale();
     this.add(child);
     child.scale.copy(childWorldScale.divide(parentWorldScale));
-    world.render(world);
 
 };
 function expose(obj) {
-    const folder = world.gui.addFolder(obj.name);
-    const storageKey = `${obj.name}_transform`;
-    const savedValues = JSON.parse(localStorage.getItem(storageKey) || '{}');
+    try {
+        obj.updateWorldMatrix(true, true);
+        const folder = world.gui.addFolder(obj.name);
+        const storageKey = `${obj.name}_transform`;
+        const savedValues = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
-    ['position', 'rotation', 'scale'].forEach(prop => {
-        ['x', 'y', 'z'].forEach(axis => {
-            const name = `${prop.charAt(0).toUpperCase() + prop.slice(1)} ${axis.toUpperCase()}`;
-            const controller = folder.add(obj[prop], axis, -10.0, 10.0).name(name);
-            
-            if (savedValues[name] !== undefined) {
-                obj[prop][axis] = savedValues[name];
-                controller.updateDisplay();
-            }
+        ['position', 'rotation', 'scale'].forEach(prop => {
+            ['x', 'y', 'z'].forEach(axis => {
+                const name = `${prop.charAt(0).toUpperCase() + prop.slice(1)} ${axis.toUpperCase()}`;
+                const controller = folder.add(obj[prop], axis, -10.0, 10.0).name(name);
 
-            controller.onChange(value => {
-                savedValues[name] = value;
-                localStorage.setItem(storageKey, JSON.stringify(savedValues));
+                if (savedValues[name] !== undefined) {
+                    obj[prop][axis] = savedValues[name];
+                    controller.updateDisplay();
+                }
+
+                controller.onChange(value => {
+                    savedValues[name] = value;
+                    localStorage.setItem(storageKey, JSON.stringify(savedValues));
+                });
             });
         });
-    });
 
-    folder.open();
+        folder.open();
+    }
+    catch (e) {
+        console.log(e);
+    }
 }

@@ -46,7 +46,7 @@ export declare class World {
     private lastScenarioID;
     constructor();
     initialize(worldScenePath?: string): Promise<void>;
-    private update(timeStep: number, unscaledTimeStep: number): void;
+    update(timeStep: number, unscaledTimeStep: number): void;
     updatePhysics(timeStep: number): void;
     isOutOfBounds(position: CANNON.Vec3): boolean;
     outOfBoundsRespawn(body: CANNON.Body, position?: CANNON.Vec3): void;

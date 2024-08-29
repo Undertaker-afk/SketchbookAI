@@ -191,13 +191,14 @@ export class World
 				this.render(this);
 			}, 1000 / 60); // 20 FPS
 		};
-		globalThis.SaveReset?.();
+		globalThis.SaveState?.();
 		animate();
 	}
 
 	// Update
 	// Handles all logic updates.
-	protected update(timeStep: number, unscaledTimeStep: number): void
+	
+	public update(timeStep: number, unscaledTimeStep: number): void
 	{
 		this.updatePhysics(timeStep);
 
@@ -315,7 +316,9 @@ export class World
 			this.registerUpdatable(worldEntity);
 		}
 		else
+		{
 			this.graphicsWorld.add(worldEntity);
+		}
 		
 	}
 
@@ -497,6 +500,7 @@ export class World
 	public gui : GUI;
 	private createParamsGUI(scope: World): void
 	{
+		
 		this.params = {
 			Pointer_Lock: true,
 			Mouse_Sensitivity: 0.3,

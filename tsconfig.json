@@ -8,6 +8,7 @@
         "sourceMap": true,
         "moduleResolution": "node",
         "declaration": true,
+        "stripInternal": true,
         "declarationDir": "build/types",
         //"outFile": "./types/index.d.ts",
         "baseUrl": ".",

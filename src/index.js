@@ -36,28 +36,31 @@ let chat = {
         document.addEventListener('pointerlockchange', () => this.isCursorLocked = !!document.pointerLockElement);
         //globalThis.world = new World();
         //await world.initialize('build/assets/world.glb');        
-        while (!globalThis.player) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        }
+
+        //while (!globalThis.player) { await new Promise(resolve => setTimeout(resolve, 100));}
 		//globalThis.SaveReset?.();
+
+
 
         if (!this.variant.content)
             this.Clear();
 
-        vue.$watch(() => this.params.lastText, (newValue) => {
-            document.title = newValue;
-        });
+
+        setTimeout(() => {
+            vue.$watch(() => this.params.lastText, (newValue) => {
+                document.title = newValue;
+            });
 
 
 
-        world.gui.add({ enableBreakpoints: settings.enableBreakpoints }, 'enableBreakpoints').name('Enable Breakpoints').onChange((value) => {
-            settings.enableBreakpoints = value;
-        });
+            world.gui.add({ enableBreakpoints: settings.enableBreakpoints }, 'enableBreakpoints').name('Enable Breakpoints').onChange((value) => {
+                settings.enableBreakpoints = value;
+            });
 
 
-        //world.timeScaleTarget=0
-        //Eval(this.variant.files[0].content);
-        
+            //world.timeScaleTarget=0
+            //Eval(this.variant.files[0].content);
+        }, 100);
         
     },
     async SetSuggestion(suggestion) {
@@ -102,6 +105,7 @@ let chat = {
                 'src/ts/enums/CharacterAnimations.ts',
                 'src/ts/characters/character_ai/FollowTarget.ts',
                 'src/ts/characters/character_ai/RandomBehaviour.ts',
+                //'src/ts/core/InputManager.ts',
                 'src/helpers.js',                
             ];
             
@@ -168,6 +172,7 @@ let chat = {
         } catch (e) {
             if(e.name == 'AbortError')
                 return;
+            this.switchVariant(0);
         } finally {
             this.abortController = null;
             this.isLoading = false;
@@ -187,7 +192,7 @@ let chat = {
         this.floatingCode = content;    
         if(variant.files.length > 0){
             var code = variant.files[0].content;
-            Reset();
+            ResetState();
             await new Promise(resolve => setTimeout(resolve, 100));
             await Eval(code);            
         }

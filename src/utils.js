@@ -101,17 +101,19 @@ function InitVue(obj, args = {}) {
     return { messageWithoutCodeBlocks, files };
 }
 var snapshot;
-function SaveReset() {
+function SaveState() {
     snapshot = {
+        reset: [],
         graphicsWorld: world.graphicsWorld.children.slice(),
         physicsWorld: world.physicsWorld.bodies.slice(),
         updatables:world.updatables.slice(),
         characters:world.characters.slice(),
         vehicles:world.vehicles.slice(),
+        folders: {...world.gui.__folders}
 //        player:player
     };
 }
-function Reset() {    
+function ResetState() {    
     world.graphicsWorld.children.length = 0;
     world.graphicsWorld.children.push(...snapshot.graphicsWorld);
     [...world.physicsWorld.bodies].forEach(body => world.physicsWorld.remove(body));
@@ -123,6 +125,15 @@ function Reset() {
     world.vehicles.length = 0;
     world.vehicles.push(...snapshot.vehicles);
     world.timeScaleTarget=1;
+    // Remove non-existent folders and update existing ones
+    Object.keys(world.gui.__folders).forEach(key => {
+        if (!snapshot.folders[key]) {
+            world.gui.removeFolder(world.gui.__folders[key]);
+        }
+    });
+    snapshot.reset.forEach(reset => reset());
+    snapshot.reset = [];
+
   //  globalThis.player = snapshot.player;    
 }
 
@@ -196,7 +207,8 @@ if (!navigator.serviceWorker && !window.location.hostname.startsWith('192')) {
 }
 function GetPlayerFront() {
     let playerLookPoint = new THREE.Vector3();
-    player.getWorldPosition(playerLookPoint);
+
+    (globalThis.player ?? world.characters[0]).getWorldPosition(playerLookPoint);
     let direction = new THREE.Vector3(0, 0, -1);
     direction.applyQuaternion(world.camera.quaternion);
     playerLookPoint.add(direction.multiplyScalar(2));    
@@ -265,21 +277,21 @@ function getSimilarityScore(str1, str2) {
     return (1 - distance / maxLen);
 }
 
-(function GLTFLoader_Load() {
+(function GLTFLoader_LoadCache() {
     const gltfCache = new Map();
-    const originalLoa2 = GLTFLoader.prototype.load;
+    const originalLoad = GLTFLoader.prototype.load;
     GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
         if (gltfCache.has(url)) {
             const cachedModel = gltfCache.get(url);
-            const clonedModel = {...cachedModel, scene: SkeletonUtils.SkeletonUtils.clone(cachedModel.scene)};
+            const clonedModel = {...cachedModel,original:cachedModel, scene: SkeletonUtils.SkeletonUtils.clone(cachedModel.scene)};
             if (onLoad) onLoad(clonedModel);
             return;
         }
 
-        originalLoa2.call(this, url,
+        originalLoad.call(this, url,
             (gltf) => {
                 gltfCache.set(url, gltf);
-                if (onLoad) onLoad({...gltf, scene: SkeletonUtils.SkeletonUtils.clone(gltf.scene)});
+                if (onLoad) onLoad({...gltf,original:gltf, scene: SkeletonUtils.SkeletonUtils.clone(gltf.scene)});
             },
             onProgress,
             onError
@@ -289,7 +301,7 @@ function getSimilarityScore(str1, str2) {
 
 THREE.Cache.enabled=true;
 
-(function GLTFLoader_Load() {
+(function GLTFLoader_LoadNotFound() {
     const originalLoad = GLTFLoader.prototype.load;
     GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
         originalLoad.call(this, url, onLoad, onProgress, (error) => {            
