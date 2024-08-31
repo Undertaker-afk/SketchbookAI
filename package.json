@@ -15,7 +15,8 @@
     "types": "build/types/sketchbook.d.ts",
     "scripts": {
         "dev": "webpack-dev-server --config webpack.dev.js",
-        "build": "webpack --config webpack.dev.js"
+        "build": "webpack --config webpack.dev.js",
+        "publish": "xcopy /E /I /Y . \\temp\\dist /EXCLUDE:.gitignore  && wrangler pages deploy \\temp\\dist"
     },
     "repository": {
         "type": "git",

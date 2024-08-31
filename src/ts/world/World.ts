@@ -64,7 +64,6 @@ export class World
 	public scenarioGUIFolder: any;
 	public updatables: IUpdatable[] = [];
 	public loadingManager: LoadingManager; 
-	public isMobile =true;
 	private lastScenarioID: string;
 
 	constructor()
@@ -89,7 +88,7 @@ export class World
 		this.renderer.setSize(window.innerWidth, window.innerHeight);
 		this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
 		this.renderer.toneMappingExposure = 1.0;
-		this.renderer.shadowMap.enabled = !this.isMobile;
+		this.renderer.shadowMap.enabled = !globalThis.isMobile;
 		this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 		this.generateHTML();
@@ -505,8 +504,8 @@ export class World
 			Pointer_Lock: true,
 			Mouse_Sensitivity: 0.3,
 			Time_Scale: 1,
-			Shadows: !this.isMobile,
-			FXAA: !this.isMobile,
+			Shadows: !globalThis.isMobile,
+			FXAA: !globalThis.isMobile,
 			Debug_Physics: false,
 			Debug_FPS: false,
 			Sun_Elevation: 50,

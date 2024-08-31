@@ -67,7 +67,7 @@ export class InputManager implements IUpdatable
 		document.addEventListener('keyup', this.boundOnKeyUp, false);
 
 		world.registerUpdatable(this);
-		if (world.isMobile) {
+		if (globalThis.isMobile) {
 			this.initJoystick();
 			this.initTouchArea();
 			this.initFButton();

@@ -4,3 +4,4 @@ node_modules
 /build/sketchbook.min.js
 steam.txt
 dist
+blend

@@ -1,4 +1,5 @@
-//Vue.config.silent = true;
+globalThis.isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 let variantTemplate = {
     content: '',
     lastError: null,
@@ -10,6 +11,7 @@ let chat = {
     abortController: null,
     inputText: '',
     window: window,
+    globalThis: globalThis,
     document: document,
     suggestions: ['Add a red cube', 'Create a bouncing ball', 'make pistol shoot, bullets, kill zombie when hit'],
     lastError: null,
@@ -74,7 +76,7 @@ let chat = {
     UploadFile(){
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.glb,.js,image/*';
+        input.accept = 'image/*'; // Only accept image files
         input.style.display = 'none';
         document.body.appendChild(input);
 

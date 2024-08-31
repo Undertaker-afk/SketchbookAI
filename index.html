@@ -68,7 +68,7 @@
         <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center" :style="{ opacity: isCursorLocked ? 1 : 1 }">
             <div class="w-full max-w-xs relative" >
                 <pre id="floating-code" class="floating-code" style="pointer-events: none;" v-html="floatingCode"></pre>
-                <div class="flex justify-center mb-2">
+                <div class="flex justify-center mb-2" v-if="globalThis.isMobile">
                     <div id="camera-button" class="camera-button" style="width: 60px; height: 60px; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer;" @click="UploadFile()">
                         <i class="fas fa-camera" style="color: white; font-size: 24px;"></i>
                     </div>
