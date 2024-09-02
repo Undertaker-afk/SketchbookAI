@@ -5,25 +5,18 @@ async function Eval(content)
 {   
     chat.variant.lastError = '';
     
-    //var removedPlayer = content.includes("let playerModel = globalThis.playerModel = await loader.loadAsync('build/assets/boxman.glb')");
-
-
     var code = //"(async () => {\n" +
      content
         .replace(/^.*(?:new World\().*$\n?/gm, '')
         .replace(/^.*(?:world\.initialize).*$\n?/gm, '')
         .replace(/world\.render\(world\);/g, '')
         .replace(/\b(let|const)\s+(\w+)\s*=/g, 'var $2 = globalThis.$2 =')        
-        + (settings.enableBreakpoints ? ";debugger;" : "")
+        + (settings.enableBreakpoints ? ";debugger;" : ";console.log('executed');")
         //+ "\n})();"
-        
-    //if(removedPlayer)
-    //    code = code.replace(/^.*(?:let playerModel = globalThis\.playerModel = await loader\.loadAsync\('build\/assets\/boxman\.glb'\);|var player = globalThis\.player = new Character\(playerModel\);|world\.add\(player\);).*$\n?/gm, '')
-//    else
-  //      world.remove(player);
+            
       
     if (chat.currentVariant!=0)
-        console.log(code);
+        console.log(content);
     if(content.includes("world.update = "))
         throw new Error("direct assign world.update = function(){} is not allowed, use addMethodListener");
     lastEvalCode = code;
@@ -47,8 +40,8 @@ console.error = (...args) => {
         return;
 
     if (globalThis.chat) {
-        if (settings?.enableBreakpoints)
-            debugger;
+     //   if (settings?.enableBreakpoints)
+         //   debugger;
         let error = chat.variant.lastError = {
             args: args,
             url: args.map(arg => arg.target?.responseURL).find(a => a),

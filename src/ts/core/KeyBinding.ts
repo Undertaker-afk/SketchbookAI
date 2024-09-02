@@ -4,9 +4,17 @@ export class KeyBinding
 	public isPressed: boolean = false;
 	public justPressed: boolean = false;
 	public justReleased: boolean = false;
-	
+	public static CreateKeyBinding(code: string)
+	{		
+		return new KeyBinding("Key" + code);
+	}
+	public static CreateMouseBinding(code: number)
+	{
+		return new KeyBinding("mouse" + code);
+	}
+
 	constructor(...code: string[])
 	{
-		this.eventCodes = code.map(a => a.replace("Mouse", "mouse"));
+		this.eventCodes = code.map(a => a.replace("MouseRight", "mouse1").replace("MouseLeft", "mouse0").replace("Mouse", "mouse"));
 	}
 }

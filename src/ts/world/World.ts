@@ -240,8 +240,8 @@ export class World
 	{
 		let inside = position.x > -211.882 && position.x < 211.882 &&
 					position.z > -169.098 && position.z < 153.232 &&
-					position.y > 0.107;
-		let belowSeaLevel = position.y < 14.989;
+					position.y > 0.107-15;
+		let belowSeaLevel = position.y < 14.989-15;
 
 		return !inside && belowSeaLevel;
 	}

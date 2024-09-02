@@ -149,8 +149,18 @@ function SetPivotCenter(gltf) {
     parent.add(model);
     gltf.scene = parent;
 }
+function GetPlayerFront(distance = 2) {
+    let playerLookPoint = new THREE.Vector3();
 
+    (globalThis.player ?? world.characters[0]).getWorldPosition(playerLookPoint);
+    let direction = new THREE.Vector3(0, 0, -1);
+    direction.applyQuaternion(world.camera.quaternion);
+    playerLookPoint.add(direction.multiplyScalar(distance));    
+    return playerLookPoint;
+}
 
+let defaultMaterial = new CANNON.Material('defaultMaterial');
+defaultMaterial.friction = 0.3;
 class BaseObject extends THREE.Object3D {
     constructor(model, isStatic = false) {
         super();
@@ -166,7 +176,7 @@ class BaseObject extends THREE.Object3D {
             mass: isStatic ? 0 : 1, // Set mass to 0 for static objects
             position: Utils.cannonVector(center),
             shape: new CANNON.Box(new CANNON.Vec3(size.x, size.y, size.z)),
-            material: new CANNON.Material('baseObjectMaterial')
+            material: defaultMaterial
         });
         this.body.friction = 0.3;
     }
@@ -174,6 +184,7 @@ class BaseObject extends THREE.Object3D {
 
     setPosition(pos) {
         this.body.position.copy(Utils.cannonVector(pos));
+        this.position.copy(pos);
     }
     update() {
         this.position.copy(Utils.threeVector(this.body.position));

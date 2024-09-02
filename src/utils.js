@@ -228,15 +228,7 @@ if (!navigator.serviceWorker && !window.location.hostname.startsWith('192')) {
         console.error('Error injecting 3D Picker:', error);
     }
 }
-function GetPlayerFront() {
-    let playerLookPoint = new THREE.Vector3();
 
-    (globalThis.player ?? world.characters[0]).getWorldPosition(playerLookPoint);
-    let direction = new THREE.Vector3(0, 0, -1);
-    direction.applyQuaternion(world.camera.quaternion);
-    playerLookPoint.add(direction.multiplyScalar(2));    
-    return playerLookPoint;
-}
 
 
 
@@ -299,51 +291,6 @@ function getSimilarityScore(str1, str2) {
 
     return (1 - distance / maxLen);
 }
-
-(function GLTFLoader_LoadCache() {
-    const gltfCache = new Map();
-    const originalLoad = GLTFLoader.prototype.load;
-    GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
-        if (gltfCache.has(url)) {
-            const cachedModel = gltfCache.get(url);
-            const clonedModel = {...cachedModel,original:cachedModel, scene: SkeletonUtils.SkeletonUtils.clone(cachedModel.scene)};
-            if (onLoad) onLoad(clonedModel);
-            return;
-        }
-
-        originalLoad.call(this, url,
-            (gltf) => {
-                gltfCache.set(url, gltf);
-                if (onLoad) onLoad({...gltf,original:gltf, scene: SkeletonUtils.SkeletonUtils.clone(gltf.scene)});
-            },
-            onProgress,
-            onError
-        );
-    };
-})();
-
-THREE.Cache.enabled=true;
-
-(function GLTFLoader_LoadNotFound() {
-    const originalLoad = GLTFLoader.prototype.load;
-    GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
-        originalLoad.call(this, url, onLoad, onProgress, (error) => {            
-            originalLoad.call(this, 'notfound.glb', onLoad, onProgress, onError);
-            let variant = chat.currentVariant;
-            const fileName = url.split('/').pop().split('.')[0];
-            picker.openModelPicker(fileName, async (downloadUrl) => {
-                const response = await fetch(downloadUrl);
-                const arrayBuffer = await response.arrayBuffer();
-                navigator.serviceWorker.controller.postMessage({
-                    action: 'uploadFiles',
-                    files: [{ name: url, buffer: arrayBuffer }]
-                });
-                await new Promise(resolve => setTimeout(resolve, 100));
-                chat.switchVariant(variant);
-            });
-        });
-    };
-})();
 
 function AutoScale({ gltfScene, approximateScaleInMeters = 5}) {
     const model = gltfScene;

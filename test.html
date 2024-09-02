@@ -1,41 +1,280 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SweetAlert in Background</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2"></script>
-    <style>
- 
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-    <button id="showAlertBtn">Show Background Alert</button>
 
-    <script>
-        Swal=Swal.mixin({
-         
-            toast: true,
-          
-        });
-
-        document.getElementById('showAlertBtn').addEventListener('click', function() {
-            Swal.fire({
-                title: 'Background Alert',
-                text: 'This alert is in the background',
-                icon: 'info',
-            });
-
-            // Immediately blur the alert to prevent focus
-            setTimeout(() => {
-                document.activeElement.blur();
-            }, 0);
-        });
-    </script>
-</body>
-</html>
+<html><head><base href="https://blockycraftworld.com/">
+  <meta charset="UTF-8">
+  <title>BlockyCraft World - 3D Block Building Adventure</title>
+  <style>
+      body { margin: 0; overflow: hidden; }
+      canvas { width: 100%; height: 100%; }
+      #hud { position: absolute; top: 10px; left: 10px; color: white; font-family: Arial, sans-serif; text-shadow: 1px 1px 2px black; }
+      #crosshair {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 20px;
+          height: 20px;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+      }
+      #crosshair::before, #crosshair::after {
+          content: "";
+          position: absolute;
+          background-color: white;
+      }
+      #crosshair::before {
+          width: 2px;
+          height: 20px;
+          left: 9px;
+      }
+      #crosshair::after {
+          width: 20px;
+          height: 2px;
+          top: 9px;
+      }
+      #genWorldBtn {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          padding: 10px;
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          cursor: pointer;
+          font-size: 16px;
+      }
+  </style>
+  </head>
+  <body>
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+      <p>BlockyCraft World</p>
+      <p>Use WASD to move, Mouse to look around, Click to place/remove blocks</p>
+      <p>Left click: Remove block, Right click: Place stone, Middle click: Place grass</p>
+  </div>
+  <div id="crosshair"></div>
+  <button id="genWorldBtn">Generate New World</button>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.4.0/simplex-noise.min.js"></script>
+  <script>
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gameCanvas') });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x87CEEB); // Set sky color to light blue
+  
+  const world = new CANNON.World();
+  world.gravity.set(0, -9.82, 0);
+  
+  const cubeSize = 1;
+  const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+  
+  // Load textures
+  const textureLoader = new THREE.TextureLoader();
+  const stoneTexture = textureLoader.load('https://i.imgur.com/DqcP8Qk.png');
+  const grassTexture = textureLoader.load('https://i.imgur.com/z8kuQvl.png');
+  
+  stoneTexture.magFilter = THREE.NearestFilter;
+  stoneTexture.minFilter = THREE.NearestFilter;
+  grassTexture.magFilter = THREE.NearestFilter;
+  grassTexture.minFilter = THREE.NearestFilter;
+  
+  const stoneMaterial = new THREE.MeshLambertMaterial({ map: stoneTexture });
+  const grassMaterial = new THREE.MeshLambertMaterial({ map: grassTexture });
+  
+  const light = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(light);
+  
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  directionalLight.position.set(1, 1, 1);
+  scene.add(directionalLight);
+  
+  const playerShape = new CANNON.Box(new CANNON.Vec3(0.4, 0.9, 0.4));
+  const playerBody = new CANNON.Body({
+      mass: 5,
+      shape: playerShape,
+      position: new CANNON.Vec3(0, 5, 0)
+  });
+  world.addBody(playerBody);
+  
+  camera.position.set(0, 2, 0);
+  
+  const blocks = [];
+  
+  function createBlock(x, y, z, material) {
+      const blockMesh = new THREE.Mesh(cubeGeometry, material);
+      blockMesh.position.set(x, y, z);
+      scene.add(blockMesh);
+  
+      const blockShape = new CANNON.Box(new CANNON.Vec3(cubeSize/2, cubeSize/2, cubeSize/2));
+      const blockBody = new CANNON.Body({
+          mass: 0,
+          shape: blockShape,
+          position: new CANNON.Vec3(x, y, z)
+      });
+      world.addBody(blockBody);
+  
+      blocks.push({ mesh: blockMesh, body: blockBody });
+  }
+  
+  function createFlatWorld() {
+      // Clear existing blocks
+      blocks.forEach(block => {
+          scene.remove(block.mesh);
+          world.remove(block.body);
+      });
+      blocks.length = 0;
+  
+      // Create flat world
+      for (let x = -10; x <= 10; x++) {
+          for (let z = -10; z <= 10; z++) {
+              createBlock(x, -1, z, grassMaterial);
+          }
+      }
+  }
+  
+  createFlatWorld();
+  
+  function createNewWorld() {
+      // Clear existing blocks
+      blocks.forEach(block => {
+          scene.remove(block.mesh);
+          world.remove(block.body);
+      });
+      blocks.length = 0;
+  
+      const simplex = new SimplexNoise();
+      const worldSize = 50;
+      const heightMap = [];
+  
+      // Generate height map using Perlin noise
+      for (let x = -worldSize; x <= worldSize; x++) {
+          heightMap[x + worldSize] = [];
+          for (let z = -worldSize; z <= worldSize; z++) {
+              let height = 0;
+              let frequency = 0.01;
+              let amplitude = 10;
+              for (let i = 0; i < 4; i++) { // 4 octaves
+                  height += simplex.noise2D(x * frequency, z * frequency) * amplitude;
+                  frequency *= 2;
+                  amplitude *= 0.5;
+              }
+              heightMap[x + worldSize][z + worldSize] = Math.round(height);
+          }
+      }
+  
+      // Create blocks based on height map
+      for (let x = -worldSize; x <= worldSize; x++) {
+          for (let z = -worldSize; z <= worldSize; z++) {
+              const y = heightMap[x + worldSize][z + worldSize];
+              createBlock(x, y, z, stoneMaterial);
+          }
+      }
+  
+      // Reset player position
+      playerBody.position.set(0, Math.max(...heightMap.flat()) + 2, 0);
+      playerBody.velocity.set(0, 0, 0);
+  }
+  
+  document.getElementById('genWorldBtn').addEventListener('click', createNewWorld);
+  
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+  
+  function handleBlockInteraction(event) {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(blocks.map(block => block.mesh));
+  
+      if (intersects.length > 0) {
+          const clickedBlock = intersects[0];
+          const clickedPoint = clickedBlock.point;
+  
+          if (event.button === 0) { // Left click: remove block
+              const index = blocks.findIndex(block => block.mesh === clickedBlock.object);
+              if (index !== -1) {
+                  scene.remove(blocks[index].mesh);
+                  world.remove(blocks[index].body);
+                  blocks.splice(index, 1);
+              }
+          } else if (event.button === 2 || event.button === 1) { // Right click or middle click: add block
+              const normalizedClickedPoint = clickedPoint.add(clickedBlock.face.normal.multiplyScalar(0.5));
+              const material = event.button === 2 ? stoneMaterial : grassMaterial;
+              createBlock(
+                  Math.round(normalizedClickedPoint.x),
+                  Math.round(normalizedClickedPoint.y),
+                  Math.round(normalizedClickedPoint.z),
+                  material
+              );
+          }
+      }
+  }
+  
+  window.addEventListener('mousedown', handleBlockInteraction);
+  window.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+  });
+  
+  const keys = {};
+  document.addEventListener('keydown', (event) => { keys[event.code] = true; });
+  document.addEventListener('keyup', (event) => { keys[event.code] = false; });
+  
+  let pitch = 0;
+  let yaw = 0;
+  document.addEventListener('mousemove', (event) => {
+      yaw -= event.movementX * 0.002;
+      pitch -= event.movementY * 0.002;
+      pitch = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch));
+  });
+  
+  document.addEventListener('click', () => {
+      document.body.requestPointerLock();
+  });
+  
+  function animate() {
+      requestAnimationFrame(animate);
+  
+      world.step(1/60);
+  
+      const speed = 5;
+      const direction = new THREE.Vector3();
+      const rotation = new THREE.Euler(0, yaw, 0, 'YXZ');
+      const forward = new THREE.Vector3(0, 0, -1).applyEuler(rotation);
+      const right = new THREE.Vector3(1, 0, 0).applyEuler(rotation);
+  
+      direction.set(0, 0, 0);
+      if (keys['KeyW']) direction.add(forward);
+      if (keys['KeyS']) direction.sub(forward);
+      if (keys['KeyA']) direction.sub(right);
+      if (keys['KeyD']) direction.add(right);
+      direction.normalize().multiplyScalar(speed);
+  
+      playerBody.velocity.x = direction.x;
+      playerBody.velocity.z = direction.z;
+  
+      if (keys['Space'] && Math.abs(playerBody.velocity.y) < 0.1) {
+          playerBody.velocity.y = 7;
+      }
+  
+      camera.position.copy(playerBody.position);
+      camera.position.y += 0.8; // Offset camera to be at eye level
+      camera.rotation.order = 'YXZ';
+      camera.rotation.y = yaw;
+      camera.rotation.x = pitch;
+  
+      blocks.forEach(block => {
+          block.mesh.position.copy(block.body.position);
+          block.mesh.quaternion.copy(block.body.quaternion);
+      });
+  
+      renderer.render(scene, camera);
+  }
+  
+  animate();
+  
+  window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+  </script>
+  </body></html>

@@ -9,13 +9,13 @@ GLTFLoader.prototype.loadAsync = async function (glbUrl) {
     });
 };
 
-var textPrompt = globalThis.textPrompt = document.createElement('div');
+const textPrompt = document.createElement('div');
 textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
 document.body.appendChild(textPrompt);
 
-var loader = globalThis.loader = new GLTFLoader();
+const loader = new GLTFLoader();
 
-var playerModel = globalThis.playerModel = await loader.loadAsync('build/assets/boxman.glb');
+const playerModel = await loader.loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
 
 class Player extends Character {
@@ -25,7 +25,7 @@ class Player extends Character {
         this.lhand = model.scene.getObjectByName("lhand");
         this.remapAnimations(model.animations);
         this.actions.interract = new KeyBinding("KeyR");
-        this.actions.placeBlock = new KeyBinding("Mouse1");
+        this.lastCubePosition = null;
     }
 
     remapAnimations(animations) {
@@ -40,42 +40,71 @@ class Player extends Character {
         for (let updatable of world.updatables) {
             if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
                 textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.justPressed) {
+                if (this.actions.interract.isPressed) {
                     updatable.interract(this);
                 }
                 return;
             }
         }
         textPrompt.textContent = "";
-
-        // Handle block placement
-        if (this.actions.placeBlock.justReleased) {
-            this.placeBlock();
-        }
-    }
-
-    placeBlock() {
-        // Raycast from the player's position to find the position to place the block
-        var raycaster = globalThis.raycaster = new THREE.Raycaster();
-        raycaster.setFromCamera(new THREE.Vector2(0, 0), world.camera);
-        var intersects = globalThis.intersects = raycaster.intersectObjects(world.graphicsWorld.children, true);
-
-        if (intersects.length > 0) {
-            var intersection = globalThis.intersection = intersects[0];
-            var position = globalThis.position = intersection.point.clone().add(intersection.face.normal.multiplyScalar(0.5));
-
-            // Create a new cube object and add it to the world
-            var cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-            var cubeMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            var cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterial);
-            var cube = globalThis.cube = new BaseObject(cubeMesh, true);
-            cube.setPosition(position);
-            world.add(cube);
-        }
     }
 
     handleMouseButton(event, code, pressed) {
         super.handleMouseButton(event, code, pressed);
+        if (event.button === 0 && pressed === true) {
+            this.removeCube();
+        } else if (event.button === 2 && pressed === true) {
+            // Handle right mouse click
+            this.placeNewCube();
+        }
+    }
+
+    removeCube() {
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), world.camera);
+        const intersects = raycaster.intersectObjects(world.graphicsWorld.children, true);
+
+        if (intersects.length > 0) {
+            const intersection = intersects[0].object?.parent; // Get the intersected object
+            if (intersection instanceof BaseObject) { // Check if it's a BaseObject
+                world.remove(intersection); // Remove from the world
+            }
+        }
+    }
+
+    placeNewCube() {
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(0, 0), world.camera);
+        const intersects = raycaster.intersectObjects(world.graphicsWorld.children, true);
+
+        const cubeScale = 0.7;
+        const cubescalex2 = 1 / cubeScale;
+        if (intersects.length > 0) {
+            const intersection = intersects[0];
+            const cubePosition = new THREE.Vector3(
+                Math.floor(intersection.point.x * cubescalex2) / cubescalex2 + cubeScale / 2,
+                Math.floor(intersection.point.y * cubescalex2) / cubescalex2 + cubeScale - (1 - cubeScale) / 2,
+                Math.floor(intersection.point.z * cubescalex2) / cubescalex2 + cubeScale / 2
+            );
+
+            if (this.lastCubePosition === null || !cubePosition.equals(this.lastCubePosition)) {
+                const textureLoader = new THREE.TextureLoader();
+                const texture = textureLoader.load('build/assets/crate_diffuse.jpg');
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(1, 1);
+
+                const newCubeModel = new THREE.Mesh(
+                    new THREE.BoxGeometry(cubeScale, cubeScale, cubeScale),
+                    new THREE.MeshStandardMaterial({ map: texture })
+                );
+                const newCube = new BaseObject(newCubeModel, true);
+                newCube.setPosition(cubePosition);
+                newCube.addToWorld(world);
+
+                this.lastCubePosition = cubePosition;
+            }
+        }
     }
 }
 
@@ -99,8 +128,8 @@ class NPC extends Character {
     }
 }
 
-var player = globalThis.player = new Player(playerModel);
-player.setPosition(-3.36, 14.1, -6.45);
+const player = new Player(playerModel);
+player.setPosition(0, 0, -5);
 world.add(player);
 
 addMethodListener(player, "inputReceiverInit", function () {
@@ -108,20 +137,25 @@ addMethodListener(player, "inputReceiverInit", function () {
 });
 player.takeControl();
 
+const pistolModel = await loader.loadAsync("build/assets/pistol.glb");
+const pistol = pistolModel.scene.getObjectByName("Object_2");
+pistol.position.set(0.1, -0.1, 0.1);
+pistol.rotation.set(0, Math.PI / 2, 0);
+player.rhand.addWithPreservedScale(pistol);
+expose(pistol, "pistol");
 world.startRenderAndUpdatePhysics?.();
 
 // Spawn multiple NPC characters
-var npcs = globalThis.npcs = [];
-var npcPositions = globalThis.npcPositions = [
-    { x: 2.5, y: 14.1, z: -6.45, dialog: "Follow me to the secret room" },
-    { x: -1.2, y: 14.1, z: -4.2, dialog: "I have something important to tell you" },
-    { x: 0.75, y: 14.63, z: -2.33, dialog: "Can you help me find my lost item?" }
+const npcs = [];
+const npcPositions = [
+    // Your NPC positions and dialogs here
 ];
 
-for (var i = globalThis.i = 0; i < npcPositions.length; i++) {
-    var npcModel = globalThis.npcModel = await loader.loadAsync('build/assets/boxman.glb');
-    var npc = globalThis.npc = new NPC(npcModel, npcPositions[i].dialog);
+for (let i = 0; i < npcPositions.length; i++) {
+    const npcModel = await loader.loadAsync('build/assets/boxman.glb');
+    const npc = new NPC(npcModel, npcPositions[i].dialog);
     npc.setPosition(npcPositions[i].x, npcPositions[i].y, npcPositions[i].z);
     npcs.push(npc);
     world.add(npc);
-};
+}
+

@@ -4,4 +4,6 @@ export declare class KeyBinding {
     justPressed: boolean;
     justReleased: boolean;
     constructor(...code: string[]);
+    static CreateKeyBinding(code: string): KeyBinding;
+    static CreateMouseBinding(code: number): KeyBinding;
 }

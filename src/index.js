@@ -127,6 +127,7 @@ let chat = {
                 'build/types/interfaces/ICollider.d.ts',
                 'build/types/core/CameraOperator.d.ts',
                 'build/types/vehicles/Car.d.ts',
+                'build/types/core/KeyBinding.d.ts',
                 'src/ts/enums/CharacterAnimations.ts',
                 'src/ts/characters/character_ai/FollowTarget.ts',
                 'src/ts/characters/character_ai/RandomBehaviour.ts',
@@ -156,7 +157,8 @@ let chat = {
             await Promise.all([1,2,3,4,5].map(async (i) => {
                 const response = await getChatGPTResponse({
                     messages: [
-                        { role: "system", content: settings.rules + `\nWhen user says: spawn or add object, then spawn it at near player position: ${playerLookPoint}` },
+                        { role: "system", content: settings.rules  },
+                        { role: "assistant", content: `When user says: spawn or add object, then spawn it at near player position: ${playerLookPoint}` },
                         { role: "system", content: filesMessage },
                         { role: "user", content: `${previousUserMessages}\n\nCurrent code:\n\`\`\`javascript\n${code}\n\`\`\`\n\nUpdate code below, Rewrite JavaScript code that will; ${this.params.lastText}` }
                     ],
