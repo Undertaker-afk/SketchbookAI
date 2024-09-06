@@ -1,13 +1,7 @@
 globalThis.world = new World();
 await world.initialize('build/assets/world.glb');
 
-GLTFLoader.prototype.loadAsync = async function (glbUrl) {
-    return new Promise((resolve, reject) => {
-        this.load(glbUrl, (gltf) => {
-            resolve(gltf);
-        }, undefined, reject);
-    });
-};
+
 
 var textPrompt = globalThis.textPrompt = document.createElement('div');
 textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
@@ -29,7 +23,6 @@ class Player extends Character {
         this.rhand = model.scene.getObjectByName("rhand");
         this.lhand = model.scene.getObjectByName("lhand");
         this.remapAnimations(model.animations);
-        this.actions.interract = new KeyBinding("KeyR");
         this.actions.aim = new KeyBinding("MouseRight");
         this.originalSensitivity = world.cameraOperator.sensitivity.clone();
         this.aimingSpeed = 0.5;
@@ -71,16 +64,7 @@ class Player extends Character {
 
         textPrompt.textContent = "";
 
-        // Check for interactable objects within range
-        for (let updatable of world.updatables) {
-            if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.isPressed) {
-                    updatable.interract(this);
-                    break;
-                }
-            }
-        }
+        
         if (this.actions.aim.isPressed) {
             world.camera.fov = this.aimingFOV;
             world.cameraOperator.sensitivity.x = this.aimingSpeed;

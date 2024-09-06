@@ -26,6 +26,14 @@ function addMethodListener(object, methodName, extension) {
     world.add(car);    
     return car;
 }
+GLTFLoader.prototype.loadAsync = async function (glbUrl) {
+    return new Promise((resolve, reject) => {
+        this.load(glbUrl, (gltf) => {
+            resolve(gltf);
+        }, undefined, reject);
+    });
+};
+
 
 function SetPivotCenter(gltf) {
     const model = gltf.scene;

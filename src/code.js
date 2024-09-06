@@ -1,13 +1,7 @@
+//IMPORTANT: Always use AutoScale(model, scale) to scale the model
 globalThis.world = new World();
 await world.initialize('build/assets/world.glb');
 
-GLTFLoader.prototype.loadAsync = async function (glbUrl) {
-    return new Promise((resolve, reject) => {
-        this.load(glbUrl, (gltf) => {
-            resolve(gltf);
-        }, undefined, reject);
-    });
-};
 
 var textPrompt = globalThis.textPrompt = document.createElement('div');
 textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
@@ -19,65 +13,26 @@ var loader = globalThis.loader = new GLTFLoader();
 
 var playerModel = globalThis.playerModel = await loader.loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
-
-class Player extends Character {
-    constructor(model) {
-        super(model);
-        this.rhand = model.scene.getObjectByName("rhand");
-        this.lhand = model.scene.getObjectByName("lhand");
-        this.remapAnimations(model.animations);
-        this.actions.interract = new KeyBinding("KeyR");
-    }
-
-    update(timeStep) {
-        super.update(timeStep);
-    }
-
-    remapAnimations(animations) {
-        animations.forEach(a => {
-            if (a.name === "Idle") a.name = CAnims.idle;
-            if (a.name === "Run") a.name = CAnims.run;
-        });
-    }
-
-    inputReceiverUpdate(deltaTime) {
-        super.inputReceiverUpdate(deltaTime);
-
-        textPrompt.textContent = "";
-
-        // Check for interactable objects within range
-        for (let updatable of world.updatables) {
-            if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.isPressed) {
-                    updatable.interract(this);
-                    break;
-                }
-            }
-        }
-
-    }
-
-    handleMouseButton(event, code, pressed) {
-        super.handleMouseButton(event, code, pressed);
-        if (event.button === 0 && pressed === true) {
-            
-        } else if (event.button === 2 && pressed === true) {
-            // Perform another action
-        }
-    }
-
-}
+AutoScale(playerModel.scene, 1.7);
 addMethodListener(world, world.update, function () {
     TWEEN.update();
 });
-var player = globalThis.player = new Player(playerModel);
+class Player extends Character
+{
+    //put player code here
+    update(timeStep) {
+        super.update(timeStep);
+    }
+    
+    inputReceiverUpdate(deltaTime) {
+        super.inputReceiverUpdate(deltaTime);
+    }
+}
+var player = globalThis.player = new Player(playerModel); 
+
 player.setPosition(0, 0, -5);
 world.add(player);
 
-addMethodListener(player, player.inputReceiverInit, function () {
-    world.cameraOperator.setRadius(1.6)
-});
 player.takeControl();
 
 world.startRenderAndUpdatePhysics?.();

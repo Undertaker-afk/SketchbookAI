@@ -352,7 +352,7 @@ function Object3DToHierarchy(gltf) {
 
 
 
-async function fetchFilesFromDir(dir) {
+async function fetchFilesFromDir(dir,fileType) {
     const response = await fetch(dir);
     const text = await response.text();
     const parser = new DOMParser();
@@ -361,7 +361,7 @@ async function fetchFilesFromDir(dir) {
 
     const files = Array.from(fileLinks).map(link => {
         const path = link.getAttribute('href');
-        return path.endsWith('.js') ? path : null;
+        return path.endsWith(fileType) ? path : null;
     }).filter(file => file); // Filter out any null values
 
     return files;

@@ -1,24 +1,19 @@
 globalThis.world = new World();
 await world.initialize('build/assets/world.glb');
 
-GLTFLoader.prototype.loadAsync = async function (glbUrl) {
-    return new Promise((resolve, reject) => {
-        this.load(glbUrl, (gltf) => {
-            resolve(gltf);
-        }, undefined, reject);
-    });
-};
-
 var textPrompt = globalThis.textPrompt = document.createElement('div');
 textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
 document.body.appendChild(textPrompt);
-
-
 
 var loader = globalThis.loader = new GLTFLoader();
 
 var playerModel = globalThis.playerModel = await loader.loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
+AutoScale(playerModel.scene, 1.7);
+
+addMethodListener(world, world.update, function () {
+    TWEEN.update();
+});
 
 class Player extends Character {
     constructor(model) {
@@ -26,11 +21,8 @@ class Player extends Character {
         this.rhand = model.scene.getObjectByName("rhand");
         this.lhand = model.scene.getObjectByName("lhand");
         this.remapAnimations(model.animations);
-        this.actions.interract = new KeyBinding("KeyR");
-    }
-
-    update(timeStep) {
-        super.update(timeStep);
+        this.actions.interract = KeyBinding.CreateKeyBinding("R");
+        this.heldWeapon = null;
     }
 
     remapAnimations(animations) {
@@ -40,44 +32,42 @@ class Player extends Character {
         });
     }
 
-    inputReceiverUpdate(deltaTime) {
-        super.inputReceiverUpdate(deltaTime);
-
-        textPrompt.textContent = "";
-
-        // Check for interactable objects within range
-        for (let updatable of world.updatables) {
-            if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.isPressed) {
-                    updatable.interract(this);
-                    break;
-                }
-            }
-        }
-
-    }
-
-    handleMouseButton(event, code, pressed) {
-        super.handleMouseButton(event, code, pressed);
-        if (event.button === 0 && pressed === true) {
-            
-        } else if (event.button === 2 && pressed === true) {
-            // Perform another action
+    attachWeapon(weapon) {
+        if (this.rhand) {
+            this.rhand.attach(weapon);
+            weapon.position.set(0, 0, 0);
+            weapon.rotation.set(0, 0, 0);
+            this.heldWeapon = weapon;
+            world.remove(weapon);
         }
     }
 
+    detachWeapon() {
+        if (this.heldWeapon) {
+            this.heldWeapon.removeFromParent();
+            this.heldWeapon = null;
+        }
+    }
 }
-addMethodListener(world, world.update, function () {
-    TWEEN.update();
-});
-var player = globalThis.player = new Player(playerModel);
+
+var player = globalThis.player = new Player(playerModel); 
 player.setPosition(0, 0, -5);
 world.add(player);
-
-addMethodListener(player, player.inputReceiverInit, function () {
-    world.cameraOperator.setRadius(1.6)
-});
 player.takeControl();
+
+class Weapon extends BaseObject {
+    constructor(model) {
+        super(model, 0.1);
+        this.interract = function (player) {
+            player.attachWeapon(this);
+            world.remove(this);
+        };
+    }
+}
+
+var pistolModel = await loader.loadAsync('build/assets/pistol.glb');
+var pistol = new Weapon(pistolModel.scene);
+pistol.setPosition(0, 0, -2);
+world.add(pistol);
 
 world.startRenderAndUpdatePhysics?.();

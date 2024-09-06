@@ -98,7 +98,7 @@ let chat = {
         navigator.clipboard.writeText(variant.files[0].content)
     },
     onClickError(){
-        this.inputText = this.params.lastText + ' \nPrevious attempt Error: ' + this.variant.lastError + ", do not make it again!";
+        this.inputText = this.params.lastText + ' \nPrevious attempt Error: ' + this.lastError.message + ", do not make it again!";
     },
     async undoLastAction() {
 
@@ -112,10 +112,13 @@ let chat = {
     },
     floatingCode: '',
     async sendInput() {
-
         let playerLookPoint = VectorToString(GetPlayerFront());
-        
         this.params.lastText = this.inputText || this.params.lastText;
+        if(!this.inputText)
+        {
+            this.inputText = this.params.lastText;
+            return;
+        }
         Say(this.params.lastText)
         this.inputText = '';
         this.abortController?.abort();
@@ -138,7 +141,9 @@ let chat = {
                 'node_modules/three/src/core/Object3D.d.ts',
                 //'src/ts/core/InputManager.ts',
                 'src/helpers.js',                
-                ...(await fetchFilesFromDir('src/examples'))
+                //'src/examples/rocketLauncher.md',
+                ...(await fetchFilesFromDir('src/examples','js')),
+              //  ...(await fetchFilesFromDir('src/examples', 'md'))
 
             ];
             
@@ -147,14 +152,15 @@ let chat = {
                     alert("Error fetching file: " + e + " " + path);
                     return '';
                 }).then(content => { 
-                    if(path.includes("example"))
+                    if (path.includes("example") && path.includes(".js"))
                         content = content.split('\n').map(line => `// ${line}`).join('\n');
+                    //  content = `/* ${content} */`; 
                     content = content.replace(/^.*\bprivate\b.*$/gm, '');
                     return { name: path, content: content };
                  })
             );
             
-            const filesMessage = (await Promise.all(fetchPromises)).map(file => `${file.name} file for reference:\`\`\`javascript\n${file.content}\n\`\`\``).join('\n\n');
+            const filesMessage = (await Promise.all(fetchPromises)).map(file => `<file name="${file.name}">\n${file.content}\n</file>`).join('\n\n');
             
             // Create a string with previous user messages
             const previousUserMessages = chat.messages.length && ("<Previous_messages>\n" + chat.messages
@@ -169,10 +175,10 @@ let chat = {
             await Promise.all([1,2,3,4,5].map(async (i) => {
                 const response = await getChatGPTResponse({
                     messages: [
-                        { role: "system", content: settings.rules  },
+                    //    { role: "system", content: settings.rules  },
                         //{ role: "assistant", content: `When user says: spawn or add object, then spawn it at near player position: ${playerLookPoint}` },
                         { role: "system", content: filesMessage },
-                        { role: "user", content: `${previousUserMessages}\n\nCurrent code:\n\`\`\`javascript\n${code}\n\`\`\`\n\nUpdate code below, ${settings.importantRules}Rewrite JavaScript code that will; ${this.params.lastText}` }
+                        { role: "user", content: `${previousUserMessages}\n\nCurrent code:\n\`\`\`javascript\n${code}\n\`\`\`\n\n${settings.importantRules}Rewrite current code to accomplish user desire: ${this.params.lastText}` }
                     ],
                     signal: this.abortController.signal
                 });
@@ -230,8 +236,8 @@ let chat = {
         if(data.files.length>0)
             variant.files = data.files;
         this.floatingCode = content;    
-        if (index == 0 && !chat.inputText)
-            chat.inputText = chat.params.lastText;
+        
+            
         if(variant.files.length > 0){
             var code = variant.files[0].content;
             ResetState();

@@ -5,3 +5,5 @@ node_modules
 steam.txt
 dist
 blend
+/src/examples/old2/
+/src/examples/old23/

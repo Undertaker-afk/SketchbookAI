@@ -2,7 +2,7 @@ import('https://esm.sh/@huggingface/inference').then(a => { globalThis.HfInferen
 globalThis.apiUrl = (globalThis.isLocal ? "http://localhost:3000/" : "https://api.gptcall.net/");
 globalThis.getChatGPTResponse = async function* ({messages,functions,model=settings.model.selected,signal,apiUrl=settings.apiUrl,apiKey=settings.apiKey}) {
 
-    messages  =  messages.map(message => ({
+    messages = messages.map(message => ({
         role: message.role,
         content: message.content,
         name: message.name,

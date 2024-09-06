@@ -1,47 +1,43 @@
+// Initialize the world
 globalThis.world = new World();
 await world.initialize('build/assets/world.glb');
 
-GLTFLoader.prototype.loadAsync = async function (glbUrl) {
-    return new Promise((resolve, reject) => {
-        this.load(glbUrl, (gltf) => {
-            resolve(gltf);
-        }, undefined, reject);
-    });
-};
+// Create UI elements
+var textPrompt = globalThis.textPrompt = createUIElement('div', "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);");
+var crosshair = globalThis.crosshair = createUIElement('div', "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border: 2px solid white; border-radius: 50%;");
 
-var textPrompt = globalThis.textPrompt = document.createElement('div');
-textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
-document.body.appendChild(textPrompt);
-
-// Create crosshair
-var crosshair = globalThis.crosshair = document.createElement('div');
-crosshair.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border: 2px solid white; border-radius: 50%;";
-document.body.appendChild(crosshair);
-
+var interactableObjects = [];
 var loader = globalThis.loader = new GLTFLoader();
-
 var playerModel = globalThis.playerModel = await loader.loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
 
 class Player extends Character {
     constructor(model) {
         super(model);
-        this.rhand = model.scene.getObjectByName("rhand");
-        this.lhand = model.scene.getObjectByName("lhand");
-        this.remapAnimations(model.animations);
-        this.actions.interract = KeyBinding.CreateKeyBinding("R");
+        this.setupProperties();
+        this.setupActions();
+    }
+
+    setupProperties() {
+        this.rhand = this.model.scene.getObjectByName("rhand");
+        this.lhand = this.model.scene.getObjectByName("lhand");
+        this.remapAnimations(this.model.animations);
+        this.setupCameraSettings();
+        this.heldWeapon = null;
+    }
+
+    setupActions() {
+        this.actions.interractKey = KeyBinding.CreateKeyBinding("R");
         this.actions.aim = KeyBinding.CreateMouseBinding(2);
         this.actions.dropWeapon = KeyBinding.CreateKeyBinding("V");
+    }
+
+    setupCameraSettings() {
         this.originalSensitivity = world.cameraOperator.sensitivity.clone();
         this.aimingSpeed = 0.5;
         this.aimingFOV = 40;
         this.aimingOffset = new THREE.Vector3(-0.5, 0.3, 0.0);
         this.originalFOV = world.camera.fov;
-        this.heldWeapon = null;
-    }
-
-    update(timeStep) {
-        super.update(timeStep);
     }
 
     remapAnimations(animations) {
@@ -70,42 +66,54 @@ class Player extends Character {
 
     inputReceiverUpdate(deltaTime) {
         super.inputReceiverUpdate(deltaTime);
+        this.handleInteractions();
+        this.handleAiming();
+        this.handleWeaponDrop();
+    }
 
+    handleInteractions() {
         textPrompt.textContent = "";
-
-        // Check for interactable objects within range
-        for (let updatable of world.updatables) {
-            if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
+        for (let object of interactableObjects) {
+            if (this.position.distanceTo(object.position) < 2) {
                 textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.isPressed) {
-                    updatable.interract(this);
+                if (this.actions.interractKey.isPressed) {
+                    object.interract(this);
                     break;
                 }
             }
         }
-        if (this.actions.aim.isPressed) {
-            world.camera.fov += (this.aimingFOV - world.camera.fov) * 0.1; // Lerp smoothly towards the aiming FOV
-            world.cameraOperator.sensitivity.x = this.aimingSpeed;
-            world.cameraOperator.sensitivity.y = this.aimingSpeed;
-            // Apply offset relative to camera rotation
-            const cameraDirection = world.camera.getWorldDirection(new THREE.Vector3());
-            const rotatedOffset = this.aimingOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(cameraDirection.x, cameraDirection.z));
-            world.cameraOperator.target.add(rotatedOffset);
-            world.camera.updateProjectionMatrix()
-            crosshair.style.display = 'block';
-            // Rotate the player towards the aim direction
-            const aimDirection = world.camera.getWorldDirection(new THREE.Vector3());
-            aimDirection.y = 0; // Ignore vertical component
-            aimDirection.normalize();
-            this.setOrientation(aimDirection, false);
-        } else {
-            world.camera.fov = this.originalFOV;
-            world.camera.updateProjectionMatrix()
-            world.cameraOperator.sensitivity.x = this.originalSensitivity.x;
-            world.cameraOperator.sensitivity.y = this.originalSensitivity.y;
-            crosshair.style.display = 'none';
-        }
+    }
 
+    handleAiming() {
+        if (this.actions.aim.isPressed) {
+            this.enableAimMode();
+        } else {
+            this.disableAimMode();
+        }
+    }
+
+    enableAimMode() {
+        world.camera.fov += (this.aimingFOV - world.camera.fov) * 0.1;
+        world.cameraOperator.sensitivity.set(this.aimingSpeed, this.aimingSpeed);
+        const cameraDirection = world.camera.getWorldDirection(new THREE.Vector3());
+        const rotatedOffset = this.aimingOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), Math.atan2(cameraDirection.x, cameraDirection.z));
+        world.cameraOperator.target.add(rotatedOffset);
+        world.camera.updateProjectionMatrix();
+        crosshair.style.display = 'block';
+        const aimDirection = world.camera.getWorldDirection(new THREE.Vector3());
+        aimDirection.y = 0;
+        aimDirection.normalize();
+        this.setOrientation(aimDirection, false);
+    }
+
+    disableAimMode() {
+        world.camera.fov = this.originalFOV;
+        world.camera.updateProjectionMatrix();
+        world.cameraOperator.sensitivity.copy(this.originalSensitivity);
+        crosshair.style.display = 'none';
+    }
+
+    handleWeaponDrop() {
         if (this.actions.dropWeapon.justPressed) {
             this.detachWeapon();
         }
@@ -115,11 +123,8 @@ class Player extends Character {
         super.handleMouseButton(event, code, pressed);
         if (event.button === 0 && pressed === true && this.heldWeapon) {
             this.heldWeapon.shoot();
-        } else if (event.button === 2 && pressed === true) {
-            // Perform another action
         }
     }
-
 }
 
 var player = globalThis.player = new Player(playerModel);
@@ -127,7 +132,7 @@ player.setPosition(0, 0, -5);
 world.add(player);
 
 addMethodListener(player, "inputReceiverInit", function () {
-    world.cameraOperator.setRadius(1.6)
+    world.cameraOperator.setRadius(1.6);
 });
 player.takeControl();
 
@@ -143,13 +148,15 @@ class Weapon extends BaseObject {
     interract(player) {
         player.attachWeapon(this);
         world.remove(this);
+        const index = interactableObjects.indexOf(this);
+        if (index > -1) {
+            interactableObjects.splice(index, 1);
+        }
     }
 
     shoot() {
         if (Date.now() - this.lastShootTime > this.shootDelay) {
             this.lastShootTime = Date.now();
-            // Implement shooting logic here, e.g., create a projectile
-            // Example using a grenade:
             this.shootGrenade();
         }
     }
@@ -162,28 +169,19 @@ class Weapon extends BaseObject {
             AutoScale(grenadeModel, 0.1);
             var grenade = new BaseObject(grenadeModel, 0.1);
             grenade.setPosition(this.getWorldPosition().clone());
-
-            // Get the camera's world direction
             var cameraDirection = new THREE.Vector3();
             world.camera.getWorldDirection(cameraDirection);
-
             var force = 30;
             var up = new THREE.Vector3(0, 1, 0);
             var direction = cameraDirection.multiplyScalar(force).add(up);
             grenade.body.velocity = Utils.cannonVector(direction);
-
             world.add(grenade);
-
-            // Ignore collisions with the player
-            grenade.body.collisionFilterMask = ~2; // Assuming the player's collision group is 2
-
-            // Check for collisions with other objects
+            grenade.body.collisionFilterMask = ~2;
             grenade.body.addEventListener('collide', (event) => {
                 var otherBody = event.body;
                 if (otherBody !== player.characterCapsule.body) {
-                    // Grenade hit something, explode
                     console.log('Grenade hit!');
-                    world.remove(grenade); // Remove the grenade from the world
+                    world.remove(grenade);
                     explodeGrenade(grenade.position);
                 }
             });
@@ -192,15 +190,13 @@ class Weapon extends BaseObject {
 }
 
 async function explodeGrenade(position) {
-    // Create a simple sphere mesh to represent the explosion
     const geometry = new THREE.SphereGeometry(0.5, 32, 32);
     const material = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.8 });
     const explosion = new THREE.Mesh(geometry, material);
     explosion.position.copy(position);
     world.graphicsWorld.add(explosion);
 
-    // Animate the explosion using Tween
-    const animateDuration = 500; // Animation duration in milliseconds
+    const animateDuration = 500;
 
     new TWEEN.Tween(explosion.scale)
         .to({ x: 4, y: 4, z: 4 }, animateDuration)
@@ -213,7 +209,6 @@ async function explodeGrenade(position) {
         })
         .start();
 
-    // Update TWEEN in the render loop
     function update() {
         TWEEN.update();
         requestAnimationFrame(update);
@@ -221,10 +216,48 @@ async function explodeGrenade(position) {
     update();
 }
 
-// Load and create a weapon object
-var rocketLauncherModel = await loader.loadAsync('build/assets/rocketlauncher.glb'); // Replace with the actual weapon model
+var rocketLauncherModel = await loader.loadAsync('build/assets/rocketlauncher.glb');
 var rocketLauncher = new Weapon(rocketLauncherModel.scene);
 world.add(rocketLauncher);
 rocketLauncher.setPosition(1, 0, -2);
 expose(rocketLauncherModel.scene, "rocketlauncher");
+interactableObjects.push(rocketLauncher);
 
+class NPC extends Character {
+    constructor(model, dialog) {
+        super(model);
+        this.dialog = dialog;
+    }
+
+    interract(player) {
+        Swal.fire({
+            title: this.dialog,
+            toast: false,
+            showCancelButton: true,
+            confirmButtonText: 'Follow',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                this.setBehaviour(new FollowTarget(player));
+            }
+        });
+    }
+}
+
+const npcs = [];
+const npcPositions = [];
+
+for (let i = 0; i < npcPositions.length; i++) {
+    const npcModel = await loader.loadAsync('build/assets/boxman.glb');
+    const npc = new NPC(npcModel, npcPositions[i].dialog);
+    npc.setPosition(npcPositions[i].x, npcPositions[i].y, npcPositions[i].z);
+    npcs.push(npc);
+    world.add(npc);
+    interactableObjects.push(npc);
+}
+
+function createUIElement(type, style) {
+    const element = document.createElement(type);
+    element.style.cssText = style;
+    document.body.appendChild(element);
+    return element;
+}

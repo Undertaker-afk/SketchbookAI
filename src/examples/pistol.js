@@ -1,18 +1,10 @@
 globalThis.world = new World();
 await world.initialize('build/assets/world.glb');
 
-GLTFLoader.prototype.loadAsync = async function (glbUrl) {
-    return new Promise((resolve, reject) => {
-        this.load(glbUrl, (gltf) => {
-            resolve(gltf);
-        }, undefined, reject);
-    });
-};
 
 var textPrompt = globalThis.textPrompt = document.createElement('div');
 textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
 document.body.appendChild(textPrompt);
-
 
 var loader = globalThis.loader = new GLTFLoader();
 
@@ -24,15 +16,7 @@ class Player extends Character {
         super(model);
         this.rhand = model.scene.getObjectByName("rhand");
         this.lhand = model.scene.getObjectByName("lhand");
-        this.remapAnimations(model.animations);
-        this.actions.interract = new KeyBinding("KeyR");
-        this.originalSensitivity = world.cameraOperator.sensitivity.clone();
-        this.actions.throwPistol = new KeyBinding("KeyG");
-        this.actions.aim = new KeyBinding("MouseRight");
-        this.aimingSpeed = 0.5;
-        this.aimingFOV = 40;
-        this.aimingOffset = new THREE.Vector3(-0.5, 0.3, 0.0);
-        this.originalFOV = world.camera.fov;
+        this.remapAnimations(model.animations);    
         this.pistol = new Pistol(this.rhand);
     }
 
@@ -48,23 +32,6 @@ class Player extends Character {
         });
     }
 
-    inputReceiverUpdate(deltaTime) {
-        super.inputReceiverUpdate(deltaTime);
-
-        textPrompt.textContent = "";
-
-        // Check for interactable objects within range
-        for (let updatable of world.updatables) {
-            if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.isPressed) {
-                    updatable.interract(this);
-                    break;
-                }
-            }
-        }
-
-    }
 
     handleMouseButton(event, code, pressed) {
         super.handleMouseButton(event, code, pressed);

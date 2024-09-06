@@ -1,13 +1,6 @@
 globalThis.world = new World();
 await world.initialize('build/assets/world.glb');
 
-GLTFLoader.prototype.loadAsync = async function (glbUrl) {
-    return new Promise((resolve, reject) => {
-        this.load(glbUrl, (gltf) => {
-            resolve(gltf);
-        }, undefined, reject);
-    });
-};
 
 const textPrompt = document.createElement('div');
 textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);";
@@ -24,7 +17,6 @@ class MinecraftPlayer extends Character {
         this.rhand = model.scene.getObjectByName("rhand");
         this.lhand = model.scene.getObjectByName("lhand");
         this.remapAnimations(model.animations);
-        this.actions.interract = new KeyBinding("KeyR");
         this.lastCubePosition = null;
     }
 
@@ -35,19 +27,7 @@ class MinecraftPlayer extends Character {
         });
     }
 
-    inputReceiverUpdate(deltaTime) {
-        super.inputReceiverUpdate(deltaTime);
-        for (let updatable of world.updatables) {
-            if (updatable.interract && this.position.distanceTo(updatable.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
-                if (this.actions.interract.isPressed) {
-                    updatable.interract(this);
-                }
-                return;
-            }
-        }
-        textPrompt.textContent = "";
-    }
+
 
     handleMouseButton(event, code, pressed) {
         super.handleMouseButton(event, code, pressed);
@@ -108,25 +88,6 @@ class MinecraftPlayer extends Character {
     }
 }
 
-class NPC extends Character {
-    constructor(model, dialog) {
-        super(model);
-        this.dialog = dialog;
-    }
-
-    interract(player) {
-        Swal.fire({
-            title: this.dialog,
-            toast: false,
-            showCancelButton: true,
-            confirmButtonText: 'Follow',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                this.setBehaviour(new FollowTarget(player));
-            }
-        });
-    }
-}
 
 const player = new Player(playerModel);
 player.setPosition(0, 0, -5);
@@ -145,18 +106,4 @@ player.rhand.attach(pistol);
 
 expose(pistol, "pistol");
 world.startRenderAndUpdatePhysics?.();
-
-// Spawn multiple NPC characters
-const npcs = [];
-const npcPositions = [
-    // Your NPC positions and dialogs here
-];
-
-for (let i = 0; i < npcPositions.length; i++) {
-    const npcModel = await loader.loadAsync('build/assets/boxman.glb');
-    const npc = new NPC(npcModel, npcPositions[i].dialog);
-    npc.setPosition(npcPositions[i].x, npcPositions[i].y, npcPositions[i].z);
-    npcs.push(npc);
-    world.add(npc);
-}
 

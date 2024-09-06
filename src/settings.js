@@ -9,6 +9,7 @@ let settings = {
     rules: `You will help write javascript code for a 3D game. 
 App description: GTA style 3D game
 Technologies: swift502/Sketchbook 3D playground built on three.js and cannon.js.
+
 You should always rewrite the whole code WITHOUT COMMENTS`,
 
     importantRules: '',
