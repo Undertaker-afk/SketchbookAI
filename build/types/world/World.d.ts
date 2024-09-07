@@ -22,7 +22,6 @@ export declare class World {
     graphicsWorld: THREE.Scene;
     sky: Sky;
     physicsWorld: CANNON.World;
-    parallelPairs: any[];
     physicsFrameRate: number;
     physicsFrameTime: number;
     physicsMaxPrediction: number;
@@ -31,7 +30,6 @@ export declare class World {
     logicDelta: number;
     requestDelta: number;
     sinceLastFrame: number;
-    justRendered: boolean;
     params: any;
     inputManager: InputManager;
     cameraOperator: CameraOperator;
@@ -44,8 +42,8 @@ export declare class World {
     readonly paths: Path[];
     scenarioGUIFolder: any;
     updatables: IUpdatable[];
+    objects: THREE.Object3D[];
     loadingManager: LoadingManager;
-    isMobile: boolean;
     private lastScenarioID;
     constructor();
     initialize(worldScenePath?: any): Promise<void>;
@@ -63,7 +61,7 @@ export declare class World {
     setTimeScale(value: number): void;
     add(worldEntity: IWorldEntity | any): void;
     registerUpdatable(registree: IUpdatable): void;
-    remove(worldEntity: IWorldEntity): void;
+    remove(worldEntity: IWorldEntity | any): void;
     unregisterUpdatable(registree: IUpdatable): void;
     loadScene(loadingManager: LoadingManager, gltf: any): void;
     launchScenario(scenarioID: string, loadingManager?: LoadingManager): void;

@@ -37,7 +37,7 @@ export class InputManager implements IUpdatable
 	{
 		this.world = world;
 		this.pointerLock = world.params.Pointer_Lock;
-		this.domElement = domElement || document.body;
+		this.domElement = document.body;
 		this.isLocked = false;
 		
 		// Bindings for later event use
@@ -84,7 +84,7 @@ export class InputManager implements IUpdatable
 		this.joystickRadius = 50;
 
 		this.joystick = document.createElement('div');
-		this.joystick.style.cssText = "position: absolute; bottom: 20px; left: 20px; width: 200px; height: 200px; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center;";
+		this.joystick.style.cssText = "z-index: 100; position: absolute; bottom: 20px; left: 20px; width: 200px; height: 200px; background-color: rgba(0, 0, 0, 0.5); border-radius: 50%; display: flex; justify-content: center; align-items: center;";
 		document.body.appendChild(this.joystick);
 
 		this.joystickInner = document.createElement('div');
@@ -249,6 +249,9 @@ export class InputManager implements IUpdatable
 
 	public onMouseDown(event: MouseEvent): void
 	{
+		if (!(event.target instanceof HTMLCanvasElement) && (event.target as HTMLElement).id !== 'floating-code') {
+			return;
+		}
 		if (event.button === 0) { // Check if the left mouse button is clicked
 			if (this.pointerLock) {
 				this.domElement.requestPointerLock();

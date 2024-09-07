@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 import { VectorSpringSimulator } from '../physics/spring_simulation/VectorSpringSimulator';
 import { RelativeSpringSimulator } from '../physics/spring_simulation/RelativeSpringSimulator';
 import { ICharacterAI } from '../interfaces/ICharacterAI';
@@ -55,8 +56,8 @@ export declare class Character extends THREE.Object3D implements IWorldEntity {
     vehicleEntryInstance: VehicleEntryInstance;
     gltf: any;
     private physicsEnabled;
-    constructor(gltf: any);
-    setAnimations(animations: []): void;
+    constructor(gltf: GLTF);
+    setAnimations(animations: THREE.AnimationClip[]): void;
     setArcadeVelocityInfluence(x: number, y?: number, z?: number): void;
     setViewVector(vector: THREE.Vector3): void;
     /**

@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
     <title>Sketchbook</title>
-    <meta name="viewport" content=" user-scalable=no">
+    <meta name="viewport" content="width=800, user-scalable=no">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.1.6/dist/full.min.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Solway:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cutive+Mono&display=swap" rel="stylesheet">    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/typescript@5.5.4/lib/typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/18.6.4/tween.umd.js"></script>    
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     
 </head>
@@ -69,9 +68,11 @@
                 <div id="controls" class="panel-segment flex-bottom"></div>
             </div>
         </div>
-        <div class="fixed" :class="(globalThis.isMobile ? 'top-4' : 'bottom-4') + ' left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center'" :style="{ opacity: isCursorLocked ? 1 : 1 }">
+        <pre id="floating-code" class="floating-code" v-html="floatingCode" style="font-size: 6px; position: absolute;"></pre>
+        <div class="fixed" :class="
+        (globalThis.isMobile ? 'top-4':'bottom-4' )
+         + ' left-1/2 transform -translate-x-1/2 z-50 flex flex-col items-center'" :style="{ opacity: isCursorLocked ? 1 : 1 }">
             <div class="w-full max-w-xs relative" >
-                <pre id="floating-code" class="floating-code" style="pointer-events: none;" v-html="floatingCode"></pre>
               
                 <div class="progress-circle w-6 h-6 mr-2" :class="{ hidden: !isLoading }"></div>
                 <div v-if="variants.length > 0" class="flex justify-center mb-2">
@@ -88,8 +89,7 @@
                             'bg-gray-300 text-gray-700': currentVariant !== index && !variant.lastError || variant.processing,
                             'opacity-50 ': variant.processing
                         }"
-                        :disabled="variant.processing"
-                    >
+                        :disabled="variant.processing">
                         <i v-if="index === 0" class='fas fa-undo'></i>
                         <span v-else>{{ index }}</span>
                     </button>
@@ -117,13 +117,20 @@
                 <span v-for="suggestion in suggestions" :key="suggestion" class="suggestion-bubble" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" @click="SetSuggestion(suggestion)">{{ suggestion }}</span>
             </div>       
         </div>
-        <div v-if="globalThis.isMobile" id="camera-button" class="camera-button" style="width: 10%; height: 10%; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);" @click="UploadFile()">
+        <div v-if="globalThis.isMobile" id="camera-button" class="camera-button" style="width: 100px; height: 100px; background-color: rgba(0, 0, 0, 0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);" @click="UploadFile()">
             <i class="fas fa-camera" style="color: white; font-size: 32px;"></i>
         </div>
         <button id="show-3d-picker" class="fixed top-16 left-4 transform bg-transparent border-none z-50" onclick="picker.openModelPicker()">
             <i class="fas fa-cube" style="font-size: 24px; color: #000;"></i>
         </button>
     </div>
+    
+    <!-- Add this new div for the context menu -->
+    <div id="contextMenu" class="absolute hidden border shadow-md rounded-md p-2">
+        <button id="copyCoordinates" class="w-full text-left hover:bg-gray-100 px-2 py-1 rounded">Copy 3D Coordinates</button>                
+    </div>
+    
+
     <script src="build/sketchbook.min.js"></script>
     <script src="src/helpers.js"></script>
     <script src="src/errorHandling.js"></script>
@@ -137,8 +144,6 @@
     <script src="localSettings.js"></script>
     
     <script src="src/tts.js"></script>
-    <script>
-   
-    </script>
+
 </body>
 </html>

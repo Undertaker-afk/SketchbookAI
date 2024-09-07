@@ -64,6 +64,10 @@ let chat = {
             //Eval(this.variant.files[0].content);
         }, 500);
         
+        // Add this new event listener
+        document.addEventListener('contextmenu', this.handleContextMenu.bind(this));
+        document.addEventListener('click', this.hideContextMenu.bind(this));
+
     },
     async SetSuggestion(suggestion) {
         this.inputText = '';
@@ -138,13 +142,16 @@ let chat = {
                 'src/ts/enums/CharacterAnimations.ts',                
                 'src/ts/characters/character_ai/FollowTarget.ts',
                 'src/ts/characters/character_ai/RandomBehaviour.ts',
-                'node_modules/three/src/core/Object3D.d.ts',
+             //   'node_modules/three/src/core/Object3D.d.ts',
                 //'src/ts/core/InputManager.ts',
                 'src/helpers.js',                
                 //'src/examples/rocketLauncher.md',
-                ...(await fetchFilesFromDir('src/examples','js')),
-              //  ...(await fetchFilesFromDir('src/examples', 'md'))
-
+                //...(await fetchFilesFromDir('src/examples','js')),                
+                //  ...(await fetchFilesFromDir('src/examples', 'md'))
+                'src/examples/rocketLauncher.js',
+                'src/examples/zombieBullet.js',
+                'src/examples/minecraft.js',
+                'src/examples/pistol.js',                
             ];
             
             const fetchPromises = fileNames.map(path => 
@@ -244,9 +251,52 @@ let chat = {
             await new Promise(resolve => setTimeout(resolve, 100));
             await Eval(code);            
         }
-    }
+    },
+
+    // Add these new methods
+    handleContextMenu(e) {
+        e.preventDefault();
+        const contextMenu = document.getElementById('contextMenu');
+        contextMenu.style.display = 'block';
+        contextMenu.style.left = `${e.clientX}px`;
+        contextMenu.style.top = `${e.clientY}px`;
+
+        const copyCoordinates = document.getElementById('copyCoordinates');
+        copyCoordinates.onclick = () => {
+            const coordinates = this.get3DCoordinates(e);
+            this.inputText += ` ${coordinates}`;
+            this.hideContextMenu();
+        };
+    },
+
+    hideContextMenu() {
+        const contextMenu = document.getElementById('contextMenu');
+        contextMenu.style.display = 'none';
+    },
+
+    // Add this new method for 3D raycasting
+    get3DCoordinates(event) {
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Calculate mouse position in normalized device coordinates
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Update the raycaster
+        raycaster.setFromCamera(mouse, world.camera);
+
+        // Perform the raycast
+        const intersects = raycaster.intersectObjects(world.graphicsWorld.children, true);
+
+        if (intersects.length > 0) {
+            const point = intersects[0].point;
+            return ` at (${point.x.toFixed(2)}, ${point.y.toFixed(2)}, ${point.z.toFixed(2)})`;
+        }
+    },
 
 }
+
 globalThis.chat = chat;
 const { data, methods, mounted, watch } = InitVue(chat, { mounted: chat.init, watch: chat.watch });
 
