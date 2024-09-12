@@ -4,6 +4,7 @@ require.config({
     }
 });
 
+var codeEditor;
 
 new Vue({
     el: '#editorApp',
@@ -16,7 +17,7 @@ new Vue({
             await new Promise(resolve => requestAnimationFrame(resolve));
             if (this.showEditor)
                 require(['vs/editor/editor.main'], async function () {
-                    let code = chat.variant.files[0].content.replace(/export |import .*?;/gs, ""); //(await fetch('src/code2.ts').then(r => r.text())).replace(/export |import .*?;/gs, "");
+                    
                     
                     let classNames = await (fetch('paths.txt').then(r => r.text()));
                     classNames = classNames.replaceAll("\\", "/").replaceAll("\r", "");
@@ -41,13 +42,13 @@ new Vue({
                     await Promise.all(classNames.map(LoadClass));
 
                     
-                    globalThis.editor = monaco.editor.create(document.getElementById('editorElement'), {
-                        value: "export {};\n" + code,
+                    codeEditor = monaco.editor.create(document.getElementById('editorElement'), {
+                    
                         language: 'typescript',
                         theme: 'vs-dark',
                         readOnly: globalThis.isMobile, // Make editor readonly if on mobile
                     });
-                    
+                    SetCode(chat.variant.files[0].content);
 
                     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
                         target: monaco.languages.typescript.ScriptTarget.ESNext,
@@ -69,3 +70,7 @@ new Vue({
         }
     }
 });
+
+function SetCode(code) {
+    codeEditor.setValue("export {};\n" + code.replace(/export |import .*?;/gs, ""));
+}

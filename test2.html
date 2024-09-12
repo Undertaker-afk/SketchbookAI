@@ -25,7 +25,7 @@
         //import { GLTFLoader } from 'GLTFLoader';
         //import { OrbitControls } from 'OrbitControls';
 
-        let scene, camera, renderer, controls, model;
+        let scene, camera, renderer, controls, model, mixer, clock, rootBone;
 
         init();
         loadGLBModel();
@@ -55,6 +55,9 @@
             const light = new THREE.DirectionalLight(0xffffff, 1);
             light.position.set(5, 5, 5).normalize();
             scene.add(light);
+
+            // Clock for animation
+            clock = new THREE.Clock();
         }
 
         function loadGLBModel() {
@@ -86,6 +89,45 @@
                 scene.add(boxHelper);
 
                 console.log('Combined Bounding Box:', combinedBoundingBox);
+
+                // Find the first bone that has keyframes
+                if (gltf.animations && gltf.animations.length > 0) {
+                    const firstAnimation = gltf.animations[1];
+                    const tracks = firstAnimation.tracks;
+                    
+                    for (let i = 0; i < tracks.length; i++) {
+                        const trackName = tracks[i].name;
+                        if (trackName.endsWith('.position') || trackName.endsWith('.quaternion')) {
+                            const boneName = trackName.split('.')[0];
+                            tf.traverse((object) => {
+                                if (object.isBone && object.name === boneName) {
+                                    rootBone = object;
+                                    console.log('Root bone found:', rootBone.name);
+                                    return;
+                                }
+                            });
+                            if (rootBone) break;
+                        }
+                    }
+                }
+
+                if (!rootBone) {
+                    console.warn('No bone with keyframes found. Using the first bone in the skeleton.');
+                    tf.traverse((object) => {
+                        if (object.isBone && !rootBone) {
+                            rootBone = object;
+                        }
+                    });
+                }
+
+                // Set up animation
+                mixer = new THREE.AnimationMixer(tf);
+                if (gltf.animations && gltf.animations.length > 0) {
+                    const firstAnimation = gltf.animations[1];
+                    const action = mixer.clipAction(firstAnimation);
+                    action.setLoop(THREE.LoopRepeat);
+                    action.play();
+                }
             }, undefined, function (error) {
                 console.error(error);
             });
@@ -93,6 +135,21 @@
 
         function animate() {
             requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+            if (mixer) {
+                mixer.update(delta);
+
+                // Store the initial position of the root bone
+                if (rootBone && !rootBone.userData.initialPosition) {
+                    rootBone.userData.initialPosition = rootBone.position.clone();
+                }
+
+                // Reset the root bone position to its initial position
+                if (rootBone && rootBone.userData.initialPosition) {
+                    rootBone.position.copy(rootBone.userData.initialPosition);
+                }
+            }
 
             controls.update();
             renderer.render(scene, camera);

@@ -182,6 +182,7 @@ export class Car extends Vehicle implements IControllable
 
 	public physicsPreStep(body: CANNON.Body, car: Car): void
 	{
+		super.physicsPreStep(body, car);
 		// Constants
 		const quat = Utils.threeQuat(body.quaternion);
 		const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(quat);

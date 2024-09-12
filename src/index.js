@@ -248,7 +248,8 @@ let chat = {
             variant.files = data.files;
         this.floatingCode = content;    
         
-            
+        if (codeEditor)
+            SetCode(variant.files[0].content);
         if(variant.files.length > 0){
             var code = variant.files[0].content;
             ResetState();

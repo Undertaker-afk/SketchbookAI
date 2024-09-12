@@ -133,7 +133,7 @@ THREE.Object3D.prototype.removeFromParent = function () {
     this.quaternion.copy(worldQuaternion);
 };
 
-function AutoScale(model, approximateScaleInMeters = 5) {
+function AutoScale(model, approximateSizeInMeters = 5) {
     
       // Create a single bounding box for all objects combined
       const boundingBox = new THREE.Box3();
@@ -151,14 +151,14 @@ function AutoScale(model, approximateScaleInMeters = 5) {
 
     const maxDimension = Math.max(size.x, size.y, size.z);
 
-    let scaleFactor = approximateScaleInMeters / maxDimension;
+    let scaleFactor = approximateSizeInMeters / maxDimension;
 
     // Determine if we need to scale by 1, 100, or 1000
-    if (maxDimension > approximateScaleInMeters * 100 * 3) {
+    if (maxDimension > approximateSizeInMeters * 100 * 3) {
         scaleFactor = 0.001;
-    } else if (maxDimension > approximateScaleInMeters * 10 * 3) {
+    } else if (maxDimension > approximateSizeInMeters * 10 * 3) {
         scaleFactor = 0.01;
-    } else if (maxDimension > approximateScaleInMeters * 3) {
+    } else if (maxDimension > approximateSizeInMeters * 3) {
         scaleFactor = 0.1;
     } else {
         scaleFactor = 1;
