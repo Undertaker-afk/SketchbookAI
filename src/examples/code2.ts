@@ -1,7 +1,5 @@
-import * as THREE from 'three';
-import {GLTF,GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { Character, ICharacterAI } from './ts/characters/Character';
 
+export{}
 
 
 //IMPORTANT: Always use AutoScale(model, scale) to scale the model
@@ -34,16 +32,16 @@ class Goblin extends Character {
   private initialRootPosition: THREE.Vector3 = new THREE.Vector3();
 
   constructor(model: GLTF) {
-    model.animations.forEach(a => {
-      if (a.name === "Idle") a.name = CAnims.idle;
-      if (a.name === "Walk") a.name = CAnims.sprint;
-    });
+    
     super(model);
     this.arcadeVelocityInfluence.set(0.2, 0, 0.2); // Adjust movement speed
     this.setBehaviour(new RandomBehaviour());
 
     // Remap animations in the goblin model
-    
+    model.animations.forEach(a => {
+      if (a.name === "Idle") a.name = CAnims.idle;
+      if (a.name === "Walk") a.name = CAnims.walk;
+    });
 
     // Find the root bone
     model.scene.traverse((object: THREE.Bone) => {
@@ -64,7 +62,15 @@ class Goblin extends Character {
   update(timeStep: number): void {
     super.update(timeStep);
 
+    // Store the initial position of the root bone
+    if (this.rootBone && !this.rootBone.userData.initialPosition) {
+      this.rootBone.userData.initialPosition = this.rootBone.position.clone();
+    }
 
+    // Reset the root bone position to its initial position
+    if (this.rootBone && this.rootBone.userData.initialPosition) {
+      this.rootBone.position.copy(this.rootBone.userData.initialPosition);
+    }
    
   }
 }
@@ -72,6 +78,7 @@ class Goblin extends Character {
 
 // Creating the player and goblin instances
 let player: Character = new Character(playerModel);
+
 expose(player.moveSpeed, "player speed");
 player.setPosition(0, 0, -5);
 world.add(player);

@@ -28,7 +28,7 @@ function CreateCar(carModel) {
 let loader = new GLTFLoader();
  /**
  * @param {string} glbUrl - The 3D model of the car
- * @returns {Promise<THREE.GLTF>}
+ * @returns {Promise<GLTF>}
  */
 async function loadAsync(glbUrl) {
     return new Promise((resolve, reject) => {
