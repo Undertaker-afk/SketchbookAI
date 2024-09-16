@@ -10,15 +10,15 @@ async function Eval(content)
     }
     chat.variant.lastError = '';
     SetCode(content);
-    content = content.replace(/export |import .*?;/gs, ""); 
+    content = replaceImports(content); 
 
     let compiledCode = compileTypeScript(content+(settings.enableBreakpoints ? "\n;debugger;" : ";console.log('executed');"));
 
 
     var code = compiledCode
-        .replace(/^.*(?:new World\().*$\n?/gm, '')
-        .replace(/^.*(?:world\.initialize).*$\n?/gm, '')
-        .replace(/world\.render\(world\);/g, '')
+        .replace(/^.*(?:new World\().*$\n?/gm, '\n')
+        .replace(/^.*(?:world\.initialize).*$\n?/gm, '\n')
+        .replace(/world\.render\(world\);/g, '\n')
         .replace(/\b(let|const)\s+(\w+)\s*=/g, 'var $2 = globalThis.$2 =')       
         
             

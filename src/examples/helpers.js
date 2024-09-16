@@ -46,7 +46,8 @@ function SetPivotCenter(gltf) {
     model.position.x -= center.x * gltf.scene.scale.x;
     model.position.z -= center.z * gltf.scene.scale.z;
     model.position.y -= boundingBox.min.y * gltf.scene.scale.y;
-    const parent = new THREE.Object3D();
+    const parent = new THREE.Group();
+    parent.name = "Pivot";
     parent.add(model);
     gltf.scene = parent;
 }
@@ -131,9 +132,6 @@ class BaseObject extends THREE.Object3D {
     oldQuaternion = new THREE.Quaternion();
     executeOneTime = true;
 
-    /**
-     * Updates the object's position and rotation based on its physics body.
-     */
     update(timeStep) {
         const newPosition = Utils.threeVector(this.body.position);
         const newQuaternion = Utils.threeQuat(this.body.quaternion);

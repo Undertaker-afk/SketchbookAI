@@ -97,9 +97,9 @@ async function GetSpawnGLBCodeFromFile(fileName, intersectionPoint=null, setPivo
     const gltf = await new Promise((resolve, reject) => {
         new GLTFLoader().load(fileName, (gltf) => resolve(gltf), undefined, (error) => reject(error));
     });
-    return GetSpawnGLBCode(gltf, fileName, intersectionPoint, setPivot);
+    return GetSpawnGLBCode(gltf, fileName, intersectionPoint, setPivot,false);
 }
-function GetSpawnGLBCode(gltf,fileName, intersectionPoint=null, setPivot = false) {
+function GetSpawnGLBCode(gltf,fileName, intersectionPoint=null, setPivot = false,full=true) {
     
     const animations = gltf.animations;
     let isSkinnedMesh = false;
@@ -108,16 +108,14 @@ function GetSpawnGLBCode(gltf,fileName, intersectionPoint=null, setPivot = false
     const modelName = "a"+fileName.split('.').slice(0, -1).join('_').replace(/[^a-zA-Z0-9_]/g, '_').substr(-6);
     let animationsCode = animations && animations.length > 0 ? `
             
-                /* CRITICAL: Uncomment and assign correct animations immediately!
-                ${animations.map((clip, index) => `                    ${modelName}.animationsMapping.??? = "${clip.name}";`).join('\n')}
-                */
+/* CRITICAL: Uncomment and replace "???" with correct aniamtion name!
+${animations.map((clip, index) => `${modelName}.animationsMapping.??? = "${clip.name}";`).join('\n')}
+*/
             
         ` : '';
         
     let code = `    
-/* ${modelName}Model hierarchy:
-${Object3DToHierarchy(gltf)}
-*/
+${full ? "/* " + modelName + " hierarchy:" + Object3DToHierarchy(gltf) + "*/" : ''}
 let ${modelName}Model = await new GLTFLoader().loadAsync("${fileName}");
 `;
     if (isSkinnedMesh) code += `
@@ -142,7 +140,7 @@ const ${modelName}Model = new TrimeshCollider(${modelName}Model.scene, {
 world.physicsWorld.addBody(${modelName}Model.body);
 */
 `;
-    code += `\n${intersectionPoint ? `${modelName}Model.scene.position.set(${intersectionPoint.x.toFixed(2)}, ${intersectionPoint.y.toFixed(2)}, ${intersectionPoint.z.toFixed(2)});` : ''}`
+    code += `\n${intersectionPoint ? `${modelName}.setPosition(${intersectionPoint.x.toFixed(2)}, ${intersectionPoint.y.toFixed(2)}, ${intersectionPoint.z.toFixed(2)});` : ''}`
 
     return code;
 }

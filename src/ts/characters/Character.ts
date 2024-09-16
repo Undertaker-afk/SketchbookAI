@@ -39,7 +39,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	public materials: THREE.Material[] = [];
 	public mixer: THREE.AnimationMixer;
 	public animations: AnimationClip[];
-	public animationMapping =  {
+	public animationsMapping =  {
 		driving: "driving",
 		drop_idle: "drop_idle",
 		drop_running: "drop_running",
@@ -95,7 +95,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	public rotationSimulator: RelativeSpringSimulator;
 	public viewVector: THREE.Vector3;
 	
-	public actions: { [key: string]: KeyBinding } = {
+	public actions = {
 		'up': new KeyBinding('KeyW',   'Movement'),
 		'down': new KeyBinding('KeyS', 'Movement'),
 		'left': new KeyBinding('KeyA', 'Movement'),
@@ -105,6 +105,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 		'enter': new KeyBinding('KeyF', 'Enter vehicle'),
 		'enter_passenger': new KeyBinding('KeyG', 'Enter as passenger'),
 		'seat_switch': new KeyBinding('KeyX', 'Switch seat'),
+		'interractKey': new KeyBinding('KeyR', 'Interract'),
 	};
 	public characterCapsule: CapsuleCollider;
 
@@ -547,7 +548,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	public setAnimation(clipName: string, fadeIn: number, loop: boolean = true, important: boolean = false): number {
 		if (this.importantAction?.isRunning()) return 0;
 
-		let clip = this.animationMapping[clipName] ? THREE.AnimationClip.findByName(this.animations, this.animationMapping[clipName]) : THREE.AnimationClip.findByName(this.animations, clipName);
+		let clip = this.animationsMapping[clipName] ? THREE.AnimationClip.findByName(this.animations, this.animationsMapping[clipName]) : THREE.AnimationClip.findByName(this.animations, clipName);
 
 		let action = this.mixer.clipAction(clip);
 		if (important)
@@ -559,7 +560,8 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 
 
-		if (!action.isRunning()) {
+		if (!action.isRunning()) 
+			{
 			Utils.stopAllAction(this.mixer);
 			action.fadeIn(fadeIn);
 			if (!loop || important) {

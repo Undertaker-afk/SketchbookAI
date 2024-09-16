@@ -53,8 +53,8 @@ class Player extends Character {
     }
 
     remapAnimations(): void {
-        this.animationMapping.idle = "idle";
-        this.animationMapping.walk = "Walk1_InPlace";
+        this.animationsMapping.idle = "idle";
+        this.animationsMapping.walk = "Walk1_InPlace";
     }
 
     setupActions(): void {
@@ -338,7 +338,7 @@ class Zombie extends Character {
     }
 
     setupAnimations(): void {
-        this.animationMapping = {
+        this.animationsMapping = {
             idle: "Idle",
             walk: "Walk_InPlace",
             run: "Run_InPlace",

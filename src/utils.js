@@ -345,7 +345,8 @@ function compileTypeScript(code) {
             module: ts.ModuleKind.CommonJS,
             target: ts.ScriptTarget.ES2015,
             inlineSourceMap: true,
-            inlineSources: true
+            inlineSources: true,
+            sourceRoot: 'C:/Users/friuns/Documents/Sketchbook/src/examples'
         }
     });
 

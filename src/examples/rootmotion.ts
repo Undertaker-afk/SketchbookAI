@@ -10,8 +10,8 @@ class Goblin extends Character {
       this.arcadeVelocityInfluence.set(0.2, 0, 0.2); // Adjust movement speed
       this.setBehaviour(new RandomBehaviour());
   
-      this.animationMapping.idle = "Idle";
-      this.animationMapping.walk = "Walk";
+      this.animationsMapping.idle = "Idle";
+      this.animationsMapping.walk = "Walk";
   
       // Find the root bone
       model.scene.traverse((object: THREE.Bone) => {

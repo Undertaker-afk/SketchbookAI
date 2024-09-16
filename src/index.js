@@ -201,7 +201,7 @@ let chat = {
                     //    { role: "system", content: settings.rules  },
                         //{ role: "assistant", content: `When user says: spawn or add object, then spawn it at near player position: ${playerLookPoint}` },
                         { role: "system", content: filesMessage },
-                        { role: "user", content: `${previousUserMessages}\n\nCurrent code:\n\`\`\`typescript\n${code}\n\`\`\`\n\n${settings.importantRules}Rewrite current code to accomplish user complain: ${this.params.lastText}` }
+                        { role: "user", content: `${previousUserMessages}\n\nCurrent code:\n\`\`\`typescript\n${code}\n\`\`\`\n\n${settings.importantRules}Rewrite and ucomment current code to accomplish user complain: ${this.params.lastText}` }
                     ],
                     signal: this.abortController.signal
                 });

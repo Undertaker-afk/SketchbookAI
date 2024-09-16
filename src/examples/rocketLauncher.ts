@@ -1,8 +1,7 @@
-//#region Imports
+
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import * as TWEEN from '@tweenjs/tween.js';
-//#endregion
 
 //#region World Initialization
 // Initialize the world
@@ -10,20 +9,18 @@ const world = new World();
 await world.initialize('build/assets/world.glb');
 //#endregion
 
-//#region UI Elements
+//#region UI Elements Creation
 // Create UI elements
 const textPrompt = createUIElement('div', "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);");
 const crosshair = createUIElement('div', "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; border: 2px solid white; border-radius: 50%;");
 //#endregion
 
-//#region Interfaces
+//#region Interactable Interface
 interface Interactable {
   interact(player: Player): void;
   position: THREE.Vector3;
 }
-//#endregion
 
-//#region Global Variables
 const interactableObjects: Interactable[] = [];
 const loader = new GLTFLoader();
 const playerModel = await loader.loadAsync('build/assets/boxman.glb');
@@ -70,8 +67,8 @@ class Player extends Character {
     }
 
     remapAnimations(): void {
-        this.animationMapping.idle = "idle";
-        this.animationMapping.walk = "Walk1_InPlace";
+        this.animationsMapping.idle = "idle";
+        this.animationsMapping.walk = "Walk1_InPlace";
     }
 
     public attachWeapon(weapon: Weapon): void {
@@ -86,7 +83,8 @@ class Player extends Character {
 
     public detachWeapon(): void {
         if (this.heldWeapon) {
-            this.heldWeapon.removeFromParent();
+            this.heldWeapon.detach();
+            interactableObjects.push(this.heldWeapon);
             this.heldWeapon = null;
         }
     }
@@ -195,7 +193,7 @@ class Weapon extends BaseObject implements Interactable {
     async shootGrenade(): Promise<void> {
         const grenadeModel = await loadAsync('build/assets/grenade.glb');
         AutoScale(grenadeModel.scene, 0.1);
-        const grenade = new BaseObject(grenadeModel.scene, .1);
+        const grenade = new Grenade(grenadeModel.scene, .1);
         const position = this.getWorldPosition(new THREE.Vector3());
         grenade.setPosition(position.x, position.y, position.z);
         const cameraDirection = world.camera.getWorldDirection(new THREE.Vector3());
@@ -204,47 +202,68 @@ class Weapon extends BaseObject implements Interactable {
 
         world.add(grenade);
         grenade.body.collisionFilterMask = ~2;
-        grenade.body.addEventListener('collide', (event: any) => {
-            world.remove(grenade);
-            explodeGrenade(grenade.position);
-        });
     }
 }
 //#endregion
 
-//#region Explosion Function
-async function explodeGrenade(position: THREE.Vector3): Promise<void> {
-    console.log("explode")
-    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.8 });
-    const explosion = new THREE.Mesh(geometry, material);
-    explosion.position.copy(position);
-    world.graphicsWorld.add(explosion);
+//#region Grenade Class
+class Grenade extends BaseObject {
+    constructor(model: THREE.Group, mass: number) {
+        super(model, mass);
+        this.body.collisionFilterMask = ~2; // Only collide with the world
+        this.body.addEventListener('collide', this.onCollide.bind(this));
+    }
 
-    const animateDuration = 500;
+    private onCollide(event: any): void {
+        world.remove(this);
+        this.explode();
+    }
 
-    new TWEEN.Tween(explosion.scale)
-        .to({ x: 4, y: 4, z: 4 }, animateDuration)
-        .easing(TWEEN.Easing.Quadratic.Out)
-        .onUpdate(() => {
-            explosion.material.opacity = 0.8 * (1 - (explosion.scale.x / 4));
-        })
-        .onComplete(() => {
-            world.graphicsWorld.remove(explosion);
-        })
-        .start();
+    private async explode(): Promise<void> {
+        console.log("explode")
+        const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const material = new THREE.MeshBasicMaterial({ color: 0xff5500, transparent: true, opacity: 0.8 });
+        const explosion = new THREE.Mesh(geometry, material);
+        explosion.position.copy(this.position);
+        world.graphicsWorld.add(explosion);
 
-    // Apply explosion force to nearby objects
-    world.physicsWorld.bodies.forEach(body => {
-        const distance = body.position.distanceTo(Utils.cannonVector(position));
-        if (distance < 2) { // Adjust the explosion radius as needed
-            const force = new CANNON.Vec3();
-            force.copy(body.position).vsub(Utils.cannonVector(position));
-            force.normalize();
-            force.scale(10 / (distance * distance), force); // Adjust the force intensity
-            body.applyImpulse(force, new CANNON.Vec3());
-        }
-    });
+        const animateDuration = 500;
+
+        new TWEEN.Tween(explosion.scale)
+            .to({ x: 4, y: 4, z: 4 }, animateDuration)
+            .easing(TWEEN.Easing.Quadratic.Out)
+            .onUpdate(() => {
+                explosion.material.opacity = 0.8 * (1 - (explosion.scale.x / 4));
+            })
+            .onComplete(() => {
+                world.graphicsWorld.remove(explosion);
+            })
+            .start();
+            
+        // Apply explosion force to nearby objects
+        world.physicsWorld.bodies.forEach(body => {
+            const distance = body.position.distanceTo(Utils.cannonVector(this.position));
+            if (distance < 10) { // Adjust the explosion radius as needed
+                const force = new CANNON.Vec3();
+                force.copy(body.position).vsub(Utils.cannonVector(this.position));
+                force.normalize();
+                force.scale(50 / (distance * distance), force); // Adjust the force intensity
+                body.applyImpulse(force, new CANNON.Vec3());
+            }
+        });
+
+        // Damage zombies in the explosion radius
+        world.characters.forEach(character => {
+            if (character instanceof Zombie) {
+                const distance = character.position.distanceTo(this.position);
+                const damage = Math.max(0, 100 * (1 - distance / 100)); // Calculate damage based on distance
+                if (damage > 0) {
+                    character.takeDamage(damage); // Deal calculated damage to the zombie
+                    console.log("Zombie hit! Health:", character.health);
+                }
+            }
+        });
+    }
 }
 //#endregion
 
@@ -262,4 +281,209 @@ world.add(rocketLauncher);
 rocketLauncher.setPosition(1, 0, -2);
 expose(rocketLauncherModel.scene, "rocketlauncher");
 interactableObjects.push(rocketLauncher);
+
+//#region RandomBehaviour Class
+
+export class ZombieBehaviour implements ICharacterAI
+{
+	public character: Character;
+	private randomFrequency: number;
+	private state: 'wander' | 'chase' | 'dead' = 'wander';
+	private player: Player;
+
+	constructor(randomFrequency: number = 100)
+	{
+		this.randomFrequency = randomFrequency;
+	}
+
+	public update(timeStep: number): void
+	{
+		if (this.state === 'dead') return;
+
+		if (this.state === 'wander') {
+			this.wander(timeStep);
+		} else if (this.state === 'chase') {
+			this.chase(timeStep);
+		}
+	}
+
+	private wander(timeStep: number): void {
+		let rndInt = Math.floor(Math.random() * this.randomFrequency);
+		let rndBool = Math.random() > 0.5 ? true : false;
+
+		if (rndInt === 0)
+		{
+			this.character.setViewVector(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5));
+
+			this.character.triggerAction('up', true);
+			this.character.charState.update(timeStep);
+			this.character.triggerAction('up', false);
+		}
+		else if (rndInt === 1)
+		{
+			this.character.triggerAction('up', rndBool);
+		}
+		else if (rndInt === 2)
+		{
+			this.character.triggerAction('run', rndBool);
+		}
+		else if (rndInt === 3)
+		{
+			this.character.triggerAction('jump', rndBool);
+		}
+	}
+
+	private chase(timeStep: number): void {
+		if (this.player) {
+			const direction = new THREE.Vector3().subVectors(this.player.position, this.character.position).normalize();
+			this.character.setViewVector(direction);
+			this.character.triggerAction('up', true);
+			this.character.charState.update(timeStep);
+		}
+	}
+
+	public setState(state: 'wander' | 'chase' | 'dead'): void {
+		this.state = state;
+	}
+
+    setPlayer(player: Player): void {
+        this.player = player;
+    }
+}
+//#endregion
+
+//#region Zombie Class
+class Zombie extends Character {
+    health: number = 100;
+    healthBar: THREE.Mesh;
+    attackDelay: number = 2000; // 2 seconds
+    lastAttackTime: number = 0;
+    attackRange: number = 2; // Distance to player for attack
+    isAttacking: boolean = false;
+    wanderRadius: number = 5;
+    wanderSpeed: number = 0.5;
+    chaseSpeed: number = 1;
+    chaseDistance: number = 10; // Distance to player to start chasing
+    chaseDuration: number = 5000; // Duration of chase after getting hit (in milliseconds)
+    chaseStartTime: number = 0;
+    behavior: ZombieBehaviour;
+
+    constructor(model: GLTF, player: Player) {
+        super(model);
+        this.setupHealthBar();
+        this.setupAnimations();
+        this.behavior = new ZombieBehaviour(100);
+        this.behavior.setPlayer(player);
+        this.behavior.character = this;
+    }
+
+    setupAnimations(): void {
+        this.animationsMapping.idle = "Idle";
+        this.animationsMapping.walk = "Walk_InPlace";
+        this.animationsMapping.run = "Run_InPlace";
+        this.animationsMapping.attack = "Attack";
+        this.animationsMapping.dead = "FallingBack";
+    }
+
+    setupHealthBar(): void {
+        const healthBarGeometry = new THREE.BoxGeometry(1, 0.1, 0.2);
+        const healthBarMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        this.healthBar = new THREE.Mesh(healthBarGeometry, healthBarMaterial);
+        this.healthBar.position.set(0, 1.2, 0);
+        this.add(this.healthBar);
+    }
+
+    update(timeStep: number): void {
+        super.update(timeStep);
+        this.updateHealthBar();
+        this.behavior.update(timeStep);
+    }
+
+    updateHealthBar(): void {
+        const healthPercentage = this.health / 100;
+        this.healthBar.scale.x = healthPercentage;
+        if (this.healthBar.material instanceof THREE.MeshBasicMaterial) {
+            this.healthBar.material.color.setHex(healthPercentage > 0.5 ? 0x00ff00 : 0xff0000);
+        }
+    }
+
+    takeDamage(damage: number): void {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.behavior.setState('dead');
+            this.startDeathAnimation();
+        } else {
+            this.playHitAnimation();
+            this.behavior.setState('chase');
+            this.chaseStartTime = Date.now();
+        }
+    }
+
+    playHitAnimation(): void {
+        const zombieMesh = this.modelContainer.children[0];
+        if (zombieMesh instanceof THREE.Mesh && zombieMesh.material instanceof THREE.MeshStandardMaterial) {
+            const originalColor = zombieMesh.material.color.clone();
+            zombieMesh.material.color.setHex(0xff0000);
+            setTimeout(() => {
+                zombieMesh.material.color.copy(originalColor);
+            }, 100);
+        }
+    }
+
+    attack(): void {
+        if (!this.isAttacking) {
+            this.isAttacking = true;
+            this.setAnimation("attack", 0, false);
+            this.mixer.addEventListener('finished', () => {
+                this.isAttacking = false;
+                this.setAnimation("idle", 0);
+            });
+        }
+    }
+
+    startDeathAnimation(): void {
+        this.setAnimation("dead", 0, false);
+        this.mixer.addEventListener('finished', () => {
+            world.unregisterUpdatable(this);
+        });
+    }
+}
+//#endregion
+
+//#region Create the cube stack
+const cubeScale = 0.7;
+
+for (let x = 0; x < 3; x++) {
+    for (let y = 0; y < 3; y++) {
+        for (let z = 0; z < 3; z++) {
+            const cubePosition = new THREE.Vector3(
+                x * cubeScale + cubeScale / 2,
+                y * cubeScale + cubeScale / 2,
+                z * cubeScale + cubeScale / 2
+            );
+
+            // Create the cube
+            const textureLoader = new THREE.TextureLoader();
+            const texture = textureLoader.load('build/assets/crate_diffuse.jpg');
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 1);
+
+            const cubeModel = new THREE.Mesh(
+                new THREE.BoxGeometry(cubeScale, cubeScale, cubeScale),
+                new THREE.MeshStandardMaterial({ map: texture })
+            );
+            const cube = new BaseObject(cubeModel, 1); // Give the cube some mass
+            cube.setPosition(cubePosition.x, cubePosition.y, cubePosition.z);
+            cube.addToWorld(world);
+        }
+    }
+}
+//#endregion
+
+//#region Zombie Initialization
+const zombieModel = await loader.loadAsync('build/assets/zombie.glb');
+const zombie = new Zombie(zombieModel, player);
+zombie.setPosition(5, 0, 0);
+world.add(zombie);
 //#endregion

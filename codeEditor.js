@@ -80,5 +80,9 @@ new Vue({
 });
 
 function SetCode(code) {
-    codeEditor.setValue("export {};\n" + code.replaceAll("export {};\n","").replace(/import .*?;/gs, ""));
+    codeEditor.setValue("export {};\n" + replaceImports(code));
+}
+function replaceImports(code)
+{
+    return code.replaceAll("export {};\n","").replace(/import .*?;/gs, "")
 }
