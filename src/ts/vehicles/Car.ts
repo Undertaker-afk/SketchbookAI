@@ -8,6 +8,7 @@ import * as Utils from '../core/FunctionLibrary';
 import { SpringSimulator } from '../physics/spring_simulation/SpringSimulator';
 import { World } from '../world/World';
 import { EntityType } from '../enums/EntityType';
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader';
 
 export class Car extends Vehicle implements IControllable
 {
@@ -32,7 +33,7 @@ export class Car extends Vehicle implements IControllable
 	private canTiltForwards: boolean = false;
 	private characterWantsToExit: boolean = false;
 
-	constructor(gltf: any)
+	constructor(gltf: GLTF)
 	{
 		super(gltf, {
 			radius: 0.25,
@@ -328,7 +329,7 @@ export class Car extends Vehicle implements IControllable
 		]);
 	}
 
-	public readCarData(gltf: any): void
+	public readCarData(gltf: GLTF): void
 	{
 		gltf.scene.traverse((child: THREE.Object3D) => {
 			if (child.hasOwnProperty('userData'))

@@ -1,111 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Load GLB and Show Bounding Box</title>
-    <style>
-        body { margin: 0; }
-        canvas { display: block; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Load Git History from ZIP</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script type="module">
+    import isomorphicGit from 'https://cdn.jsdelivr.net/npm/isomorphic-git@1.27.1/+esm'
+    globalThis.git = isomorphicGit;
+    </script>
+  <script src="https://cdn.jsdelivr.net/npm/@isomorphic-git/lightning-fs@4.6.0/dist/lightning-fs.min.js"></script>
 </head>
-<body>tdaf
-    <script type="importmap2">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
-                "GLTFLoader": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/loaders/GLTFLoader.js",
-                "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/controls/OrbitControls.js"
+<body>
+  <h1>Git History from ZIP</h1>
+  <button id="loadZip">Load Git History</button>
+  <pre id="output"></pre>
+
+  <script>
+    document.getElementById('loadZip').addEventListener('click', async function () {
+      const url = 'git.zip'; // Replace with the actual ZIP URL
+      const outputElement = document.getElementById('output');
+      outputElement.textContent = 'Fetching ZIP...';
+
+      try {
+        // Step 1: Fetch the ZIP file
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        // Step 2: Get the ZIP data as a Blob
+        const blob = await response.blob();
+
+        // Step 3: Initialize JSZip and load the ZIP data
+        const zip = await JSZip.loadAsync(blob);
+
+        // Step 4: Set up an in-memory file system (using LightningFS)
+        const fs = new LightningFS('fs');
+        const pfs = fs.promises;
+
+        // Step 5: Extract ZIP contents into the virtual filesystem
+        outputElement.textContent = 'Extracting ZIP...';
+
+        for (const [filename, file] of Object.entries(zip.files)) {
+          outputElement.textContent += `\nExtracting: ${filename}`;
+          if (file.dir) {
+            try {
+              await pfs.mkdir('/' + filename, { recursive: true });
+            } catch (error) {
+              if (error.code !== 'EEXIST') throw error;
             }
-        }
-    </script>
-    <script src="build/sketchbook.min.js"></script>
-    <script type="module">
-   
-
-        // Set up Three.js scene
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        // Set up OrbitControls
-        const controls = new OrbitControls(camera, renderer.domElement);
-
-        // Set up Cannon.js world
-        const world = new CANNON.World({
-            gravity: new CANNON.Vec3(0, -9.82, 0)
-        });
-
-        // Create a plane
-        const planeShape = new CANNON.Plane();
-        const planeBody = new CANNON.Body({
-            mass: 0,
-            shape: planeShape
-        });
-        planeBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-        world.addBody(planeBody);
-
-        // Create a visual representation of the plane
-        const planeGeometry = new THREE.PlaneGeometry(10, 10);
-        const planeMaterial = new THREE.MeshBasicMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
-        const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-        planeMesh.rotation.x = -Math.PI / 2;
-        scene.add(planeMesh);
-
-        // Create a ball
-        const radius = 0.5;
-        const sphereShape = new CANNON.Sphere(radius);
-        const sphereBody = new CANNON.Body({
-            mass: 5,
-            shape: sphereShape,
-            position: new CANNON.Vec3(0, 5, 0)
-        });
-        world.addBody(sphereBody);
-
-        // Create a visual representation of the ball
-        const sphereGeometry = new THREE.SphereGeometry(radius);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-        const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        scene.add(sphereMesh);
-
-        // Position camera
-        camera.position.set(0, 5, 10);
-        controls.update();
-
-        // Add collision detection
-        sphereBody.addEventListener("collide", function(e) {
-            console.log("Collision detected!");
-        });
-
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-
-            // Step the physics world
-            world.step(1 / 60);
-
-            // Update the sphere mesh position to match its body
-            sphereMesh.position.copy(sphereBody.position);
-            sphereMesh.quaternion.copy(sphereBody.quaternion);
-
-            controls.update();
-            renderer.render(scene, camera);
+          } else {
+            const content = await file.async('uint8array');
+            const dirPath = '/' + filename.split('/').slice(0, -1).join('/');
+            try {
+              await pfs.mkdir(dirPath, { recursive: true });
+            } catch (error) {
+              if (error.code !== 'EEXIST') throw error;
+            }
+            await pfs.writeFile('/' + filename, content);
+          }
         }
 
-        animate();
+        // Step 6: Use isomorphic-git to read the commit history from the extracted `.git` folder
+        outputElement.textContent += '\nReading Git history...';
 
-        // Handle window resize
-        window.addEventListener('resize', onWindowResize, false);
+        const commits = await git.log({
+          fs,
+          dir: '/',
+          depth: 10, // Adjust depth for more commits
+        });
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
+        // Step 7: Display commit history
+        outputElement.textContent += '\nCommit History:\n';
+        commits.forEach(commit => {
+          outputElement.textContent += `Commit: ${commit.oid}\nAuthor: ${commit.commit.author.name}\nDate: ${commit.commit.author.timestamp}\nMessage: ${commit.commit.message}\n\n`;
+        });
 
-     
-    </script>
+      } catch (error) {
+        outputElement.textContent += `\nError: ${error.message}`;
+        console.error(error);
+      }
+    });
+  </script>
 </body>
 </html>

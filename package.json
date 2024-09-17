@@ -41,13 +41,15 @@
     "webpack-merge": "^5.8.0"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.17.1",
+    "@isomorphic-git/lightning-fs": "^4.6.0",
+    "@tweenjs/tween.js": "^25.0.0",
     "cannon-es": "^0.20.0",
+    "isomorphic-git": "^1.27.1",
     "jquery": "^3.6.0",
     "lodash": "^4.17.21",
     "sweetalert2": "^11.4.37",
     "three": "^0.152.0",
-    "three-csm": "^2.0.0",
-    "@google/generative-ai": "^0.17.1",
-    "@tweenjs/tween.js": "^25.0.0"
+    "three-csm": "^2.0.0"
   }
 }

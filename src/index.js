@@ -167,6 +167,7 @@ let chat = {
                 'src/examples/minecraft.ts',
                 'src/examples/dialog.ts',
                 'src/examples/pistol.ts',                
+                'src/examples/carExample.ts'
             ];
             
             const fetchPromises = fileNames.map(path => 

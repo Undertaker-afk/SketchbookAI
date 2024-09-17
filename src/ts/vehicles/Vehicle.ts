@@ -54,8 +54,8 @@ export abstract class Vehicle extends THREE.Object3D implements IWorldEntity
 		this.collision.material = mat;
 
 		// Read GLTF
-		if (!this.readVehicleData(gltf))
-			(gltf.initCar ? gltf.initCar : globalThis.initCar)(this, gltf);
+		this.readVehicleData(gltf)
+			
 
 		this.modelContainer = new THREE.Group();
 		this.add(this.modelContainer);
