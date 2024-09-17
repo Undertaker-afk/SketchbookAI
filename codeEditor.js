@@ -72,7 +72,7 @@ new Vue({
         runCode() {
             ResetState();            
             const code = codeEditor.getValue();
-            chat.variant.files[0].content = code.replaceAll("export {};","");
+            chat.variant.files[0].content = code.replaceAll("export {}","");
             setTimeout(() => Eval(code), 100);
             this.toggleEditor();            
         }
@@ -80,9 +80,9 @@ new Vue({
 });
 
 function SetCode(code) {
-    codeEditor.setValue("export {};\n" + replaceImports(code));
+    codeEditor.setValue("export {};" + replaceImports(code));
 }
 function replaceImports(code)
 {
-    return code.replaceAll("export {};\n","").replace(/import .*?;/gs, "")
+    return code.replaceAll("export {};","").replace(/import .*?;/gs, "")
 }

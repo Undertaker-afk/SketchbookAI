@@ -35,8 +35,8 @@ class Player extends Character {
         for (let a of interactableObjects) {
             const distance = this.position.distanceTo(a.position);
             if (distance < 2) {
-                textPrompt.textContent = "Press R to interact"; // Show prompt
-                if (this.actions.interractKey.isPressed) {
+                textPrompt.textContent = "Press E to interact"; // Show prompt
+                if (this.actions.interactKey.isPressed) {
                     a.interact(this);
                     break;
                 }
@@ -73,7 +73,7 @@ world.add(aalking);
 
 // Make aalking interactable
 interactableObjects.push({
-    interact: (player: Player) => {
+    interact: async (player: Player) => {
         // Play talking animation
         aalking.setAnimation("talking", 0, false);
 
@@ -82,46 +82,33 @@ interactableObjects.push({
         aalking.setOrientation(lookDirection);
 
         // Show dialog using Swal
-        Swal.fire({
-            title: 'Hello there!',
-            text: "What's your name?",
+        const { value: playerRequest } = await Swal.fire({
+            title: 'Oh boy! Hi there, pal!',
+            text: "What can I do for ya today?",
             input: 'text',
-            inputPlaceholder: 'Enter your name',
+            inputPlaceholder: 'Tell Mickey what you want',
             showCancelButton: false,
-            confirmButtonText: 'Reply'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const reply = result.value;
-                // Handle the reply (e.g., display a message, change animations)
-                console.log("The player replied:", reply); 
-                // Play talking animation again for the response
-                aalking.setAnimation("talking", 0, false); 
-                // Show a new dialog with the response
-                Swal.fire({
-                    title: `Nice to meet you, ${reply}!`,
-                    text: '',
-                    showCancelButton: false,
-                    confirmButtonText: 'Continue'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Play talking animation again for the second response
-                        aalking.setAnimation("talking", 0, false); 
-                        // Show a final dialog
-                        Swal.fire({
-                            title: `It was good talking to you, ${reply}!`,
-                            text: '',
-                            showCancelButton: false,
-                            confirmButtonText: 'Okay'
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Play idle animation
-                                aalking.setAnimation("idle", 0);
-                            }
-                        });
-                    }
-                });
-            }
+            confirmButtonText: 'Tell Mickey'
         });
+
+        if (playerRequest) {
+            // Use Hugging Face Inference to generate a response
+            const response = await GenerateResponse(`You are Mickey Mouse. Someone just told you: "${playerRequest}". Respond to them in Mickey's cheerful and friendly style, using his catchphrases and mannerisms.`);
+
+            // Play talking animation again for the response
+            aalking.setAnimation("talking", 0, false); 
+
+            // Show a new dialog with the response
+            await Swal.fire({
+                title: `${response}`,
+                text: '',
+                showCancelButton: false,
+                confirmButtonText: 'Thanks, Mickey!'
+            });
+
+            // Play idle animation
+            aalking.setAnimation("idle", 0);
+        }
         // Return to idle animation after the talking animation finishes
         aalking.mixer.addEventListener('finished', () => {
             aalking.setAnimation("idle", 0);

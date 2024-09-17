@@ -165,6 +165,7 @@ let chat = {
                 //  ...(await fetchFilesFromDir('src/examples', 'md'))
                 'src/examples/rocketLauncher.ts',
                 'src/examples/minecraft.ts',
+                'src/examples/dialog.ts',
                 'src/examples/pistol.ts',                
             ];
             

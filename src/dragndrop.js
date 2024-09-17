@@ -131,14 +131,8 @@ world.add(${modelName});
 //CRITICAL: Uncomment and assign correct scale immediately!
 //AutoScale(${modelName}Model.scene, 5);
 ${setPivot ? `SetPivotCenter(${modelName}Model);` : ''}
-world.graphicsWorld.add(${modelName}Model.scene);
-/*
-const ${modelName}Model = new TrimeshCollider(${modelName}Model.scene, {
-        position: ${modelName}Model.scene.position,
-        rotation: ${modelName}Model.scene.quaternion
-    });
-world.physicsWorld.addBody(${modelName}Model.body);
-*/
+let ${modelName} = new BaseObject(${modelName}Model.scene);
+world.add(${modelName});
 `;
     code += `\n${intersectionPoint ? `${modelName}.setPosition(${intersectionPoint.x.toFixed(2)}, ${intersectionPoint.y.toFixed(2)}, ${intersectionPoint.z.toFixed(2)});` : ''}`
 

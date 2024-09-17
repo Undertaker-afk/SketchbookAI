@@ -53,7 +53,7 @@ class Player extends Character {
     }
 
     setupActions(): void {
-        this.actions.interractKey = KeyBinding.CreateKeyBinding("KeyR");
+        this.actions.interactKey = KeyBinding.CreateKeyBinding("KeyR");
         this.actions.aim = KeyBinding.CreateMouseBinding(2);
         this.actions.dropWeapon = KeyBinding.CreateKeyBinding("KeyV");
     }
@@ -100,8 +100,8 @@ class Player extends Character {
         textPrompt.textContent = "";
         for (let object of interactableObjects) {
             if (this.position.distanceTo(object.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
-                if (this.actions.interractKey.isPressed) {
+                textPrompt.textContent = "Press E to interact";
+                if (this.actions.interactKey.isPressed) {
                     object.interact(this);
                     break;
                 }

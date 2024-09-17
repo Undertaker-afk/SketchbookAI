@@ -54,7 +54,7 @@ class Player extends Character {
 
         for (let item of items) {
             if (this.position.distanceTo(item.position) < 2) {
-                textPrompt.textContent = "Press R to interact";
+                textPrompt.textContent = "Press E to interact";
                 if (this.actions.interract.isPressed) {
                     item.interract(this);
                     break;

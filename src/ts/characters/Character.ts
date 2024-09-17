@@ -95,7 +95,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	public rotationSimulator: RelativeSpringSimulator;
 	public viewVector: THREE.Vector3;
 	
-	public actions = {
+	public actions= {
 		'up': new KeyBinding('KeyW',   'Movement'),
 		'down': new KeyBinding('KeyS', 'Movement'),
 		'left': new KeyBinding('KeyA', 'Movement'),
@@ -105,7 +105,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 		'enter': new KeyBinding('KeyF', 'Enter vehicle'),
 		'enter_passenger': new KeyBinding('KeyG', 'Enter as passenger'),
 		'seat_switch': new KeyBinding('KeyX', 'Switch seat'),
-		'interractKey': new KeyBinding('KeyR', 'Interract'),
+		'interactKey': new KeyBinding('KeyE', 'Interact'),
 	};
 	public characterCapsule: CapsuleCollider;
 
@@ -548,7 +548,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	public setAnimation(clipName: string, fadeIn: number, loop: boolean = true, important: boolean = false): number {
 		if (this.importantAction?.isRunning()) return 0;
 
-		let clip = this.animationsMapping[clipName] ? THREE.AnimationClip.findByName(this.animations, this.animationsMapping[clipName]) : THREE.AnimationClip.findByName(this.animations, clipName);
+		let clip = this.animations.find(a=>a.name ==  clipName) ?? THREE.AnimationClip.findByName(this.animations, this.animationsMapping[clipName]);
 
 		let action = this.mixer.clipAction(clip);
 		if (important)
@@ -560,8 +560,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 
 
-		if (!action.isRunning()) 
-			{
+		if (!action.isRunning()) {
 			Utils.stopAllAction(this.mixer);
 			action.fadeIn(fadeIn);
 			if (!loop || important) {

@@ -1,6 +1,4 @@
-
-
-export { }
+export {};
 
 // IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI

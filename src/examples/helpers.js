@@ -364,3 +364,23 @@ function createUIElement(type, style) {
     document.body.appendChild(element);
     return element;
 }
+
+
+import('https://esm.sh/@huggingface/inference').then(({ HfInference }) => globalThis.HfInference = HfInference);
+
+async function GenerateResponse(prompt) {
+
+    const hf = new HfInference('YOUR_HUGGINGFACE_TOKEN_HERE');
+    const messages = [
+        { role: 'user', content: prompt }
+    ];
+    const response = await hf.chatCompletion({
+        model: "mistralai/Mixtral-8x7B-Instruct-v0.1",
+        messages: messages,
+        max_tokens: 1000,
+        temperature: 0.1,
+        seed: 0,
+    });
+    const aiResponse = response.choices[0].message.content;
+    return aiResponse;
+}
