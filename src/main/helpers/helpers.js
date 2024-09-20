@@ -58,38 +58,87 @@ function log(...args) {
 class BaseObject extends THREE.Object3D {
     updateOrder = 0;
     body;
+    colliderMeshType;
     
     /**
      * @param {THREE.Group} model - The 3D model to be used for this object.
      * @param {number} [mass=1] - The mass of the object for physics calculations.
+     * @param {('box'|'sphere'|'convex'|'concave'|'none')} [colliderMeshType='box'] - The type of collider and mesh to use.
      * @param {CANNON.Body.Type} [type=CANNON.Body.STATIC] - The type of the physics body.
      */
-    constructor(model, mass = 1, type = mass > 0 ? CANNON.Body.DYNAMIC : CANNON.Body.STATIC) {
+    constructor(model, mass = 1, colliderMeshType = 'box', type = mass > 0 ? CANNON.Body.DYNAMIC : CANNON.Body.STATIC) {
         super();
-        model =cloneGltf(model);
-        
         const bbox = new THREE.Box3().setFromObject(model);
+
         const size = bbox.getSize(new THREE.Vector3()).multiplyScalar(0.5);
-        const center = new THREE.Vector3();        
-        bbox.getCenter(center);
-        model.position.copy(center.negate());
+        this.centerOffset = new THREE.Vector3();        
+        bbox.getCenter(this.centerOffset);
+        
         this.add(model);
+        this.colliderMeshType = colliderMeshType;
+
+        let shape;
+        switch (colliderMeshType) {
+            case 'sphere':
+                const radius = Math.max(size.x, size.y, size.z);
+                shape = new CANNON.Sphere(radius);
+                break;
+            case 'convex':
+            case 'concave':
+                let vertices = [];
+                let indices = [];
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        const positions = child.geometry.attributes.position.array;
+                        const vertexCount = positions.length / 3;
+                        for (let i = 0; i < vertexCount; i++) {
+                            vertices.push(new CANNON.Vec3(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]));
+                        }
+                        if (child.geometry.index) {
+                            indices = indices.concat(Array.from(child.geometry.index.array));
+                        } else {
+                            for (let i = 0; i < vertexCount; i += 3) {
+                                indices.push(i, i + 1, i + 2);
+                            }
+                        }
+                    }
+                });
+                if (colliderMeshType === 'convex') {
+                    shape = new CANNON.ConvexPolyhedron({ vertices: vertices, faces: indices });
+                } else {
+                    shape = new CANNON.Trimesh(vertices, indices);
+                }
+                break;
+            case 'none':
+                shape = null;
+                break;
+            case 'box':
+            default:
+                shape = new CANNON.Box(new CANNON.Vec3(size.x, size.y, size.z));
+                break;
+        }
+
         /**
          * The physics body of the object.
          * @type {CANNON.Body}
          */
-        this.body = new CANNON.Body(log({
-            mass: mass,
-            position: Utils.cannonVector(center),
-            shape: new CANNON.Box(new CANNON.Vec3(size.x, size.y, size.z)),
-            material: defaultMaterial,
-            type: type,
+        if (colliderMeshType === 'none') {
+            this.body = null;
+        } else {
+            this.body = new CANNON.Body(log({
+                mass: mass,
+                position: new CANNON.Vec3(this.centerOffset.x, this.centerOffset.y, this.centerOffset.z),
+                shape: shape,
+                material: defaultMaterial,
+
+                type: type,
+            }));
             
-        }));
-        this.body.material.friction = 0.5;
-        setTimeout(() => {
-            this.body.addEventListener('collide', (event)=>this.onCollide(event));
-        }, 100);
+            this.body.material.friction = 0.5;
+            setTimeout(() => {
+                this.body.addEventListener('collide', (event)=>this.onCollide(event));
+            }, 100);
+        }
     }
     onCollide(event) {
         
@@ -101,9 +150,11 @@ class BaseObject extends THREE.Object3D {
      * @param {number} z - The z-coordinate.
      */
     setPosition(x, y, z) {
-        this.body.position.set(x, y, z);
+        if (this.body) {
+            this.body.position.set(x, y, z);
+            this.body.updateMassProperties();
+        }
         this.position.set(x, y, z);
-        this.body.updateMassProperties();
          // Check for overlapping objects with the current box collider
     }
 
@@ -129,20 +180,30 @@ class BaseObject extends THREE.Object3D {
     executeOneTime = true;
 
     update(timeStep) {
-        const newPosition = Utils.threeVector(this.body.position);
-        const newQuaternion = Utils.threeQuat(this.body.quaternion);
-        let worldPos = this.position;
-        let worldRot = this.quaternion;
-        if (this.executeOneTime || !worldPos.equals(this.oldPosition) || !worldRot.equals(this.oldQuaternion)) {
-            this.updateWorldMatrix(true,true);
-            this.body.position.copy(Utils.cannonVector(worldPos));
-            this.body.quaternion.copy(Utils.cannonQuat(worldRot));            
+        if (!this.body) return;
+
+        let position = this.position;
+        let rotation = this.quaternion;
+
+        if (this.executeOneTime || !position.equals(this.oldPosition) || !rotation.equals(this.oldQuaternion)) {
+
+            // Object has been moved externally, update the physics body
+            const rotatedOffset = this.centerOffset.clone().applyQuaternion(rotation);
+            this.body.position.copy(Utils.cannonVector(position.clone().add(rotatedOffset)));
+            this.body.quaternion.copy(Utils.cannonQuat(rotation));
+            this.body.updateMassProperties();
+
         } else {
-            this.position.copy(newPosition);
-            this.quaternion.copy(newQuaternion);
+            // Update object based on physics body
+            const bodyPosition = Utils.threeVector(this.body.position);
+            const bodyRotation = Utils.threeQuat(this.body.quaternion);
+            const rotatedOffset = this.centerOffset.clone().applyQuaternion(bodyRotation);
+            this.position.copy(bodyPosition.sub(rotatedOffset));
+            this.quaternion.copy(bodyRotation);
         }
-        this.oldPosition.copy(worldPos);
-        this.oldQuaternion.copy(worldRot);
+
+        this.oldPosition.copy(position);
+        this.oldQuaternion.copy(rotation);
         this.executeOneTime = false;
     }
 
@@ -152,7 +213,9 @@ class BaseObject extends THREE.Object3D {
      */
     addToWorld(world) {
         world.graphicsWorld.add(this);
-        world.physicsWorld.addBody(this.body);
+        if (this.body) {
+            world.physicsWorld.addBody(this.body);
+        }
         world.updatables.push(this);
     }
 
@@ -162,7 +225,9 @@ class BaseObject extends THREE.Object3D {
      */
     removeFromWorld(world) {
         world.graphicsWorld.remove(this);
-        world.physicsWorld.removeBody(this.body);
+        if (this.body) {
+            world.physicsWorld.removeBody(this.body);
+        }
     }
 }
 

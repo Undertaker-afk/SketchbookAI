@@ -48,3 +48,9 @@ export declare function countSleepyBodies(): any;
 export declare function stopAllAction(mixer: any): THREE.AnimationMixer;
 export declare function getActions(mixer: any): any[];
 export declare function isActive(mixer: any): boolean;
+/**
+ * Creates a deep clone of a GLTF object.
+ * @param {GLTF} gltf - The GLTF object to clone.
+ * @returns {GLTF} A new GLTF object with a cloned scene.
+ */
+export declare function cloneGltf(gltf: any): any;

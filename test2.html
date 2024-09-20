@@ -3,161 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three.js Load GLB and Show Bounding Box</title>
+    <title>Custom dat.GUI NumberController</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
+        body {
+            font-family: Arial, sans-serif;
+        }
     </style>
 </head>
 <body>
-    <script type="importmap2">
-        {
-            "imports": {
-                "three":          "https://cdn.jsdelivr.net/npm/three@0.118.0/build/three.module.js",
-                "GLTFLoader":     "https://cdn.jsdelivr.net/npm/three@0.118.0/examples/jsm/loaders/GLTFLoader.js",
-                "OrbitControls":  "https://cdn.jsdelivr.net/npm/three@0.118.0/examples/jsm/controls/OrbitControls.js"
-            }
-        }
-    </script>
-    <script src="build/sketchbook.min.js"></script>
-    <script type="module">
-        //import * as THREE from 'three';
-        //import { GLTFLoader } from 'GLTFLoader';
-        //import { OrbitControls } from 'OrbitControls';
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    <script>
+    // Extend NumberController to create a custom RangeController
+dat.gui.RangeController = function(object, property, min, max, step) {
+    dat.controllers.NumberController.call(this, object, property, min, max, step);
 
-        let scene, camera, renderer, controls, model, mixer, clock, rootBone;
+    var _this = this;
 
-        init();
-        loadGLBModel();
-        animate();
+    this.__min = min;
+    this.__max = max;
+    this.__step = step;
 
-        function init() {
-            // Scene
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0xeeeeee);
+    this.__input = document.createElement('div');
+    this.__input.classList.add('slider');
 
-            // Camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 2, 55);
+    this.__minHandle = document.createElement('div');
+    this.__maxHandle = document.createElement('div');
+    this.__range = document.createElement('div');
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
+    this.__minHandle.classList.add('handle', 'min-handle');
+    this.__maxHandle.classList.add('handle', 'max-handle');
+    this.__range.classList.add('range');
 
-            // Orbit Controls
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.25;
-            controls.enableZoom = true;
+    this.__input.appendChild(this.__minHandle);
+    this.__input.appendChild(this.__maxHandle);
+    this.__input.appendChild(this.__range);
 
-            // Lighting
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(5, 5, 5).normalize();
-            scene.add(light);
+    this.domElement.appendChild(this.__input);
 
-            // Clock for animation
-            clock = new THREE.Clock();
+    this.updateDisplay();
+
+    function onMouseDrag(e) {
+        e.preventDefault();
+
+        var rect = _this.__input.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / rect.width;
+
+        x = Math.max(0, Math.min(x, 1));
+
+        var value = _this.__min + (_this.__max - _this.__min) * x;
+        value = Math.round(value / _this.__step) * _this.__step;
+
+        if (e.target === _this.__minHandle) {
+            _this.object[_this.property][0] = Math.min(value, _this.object[_this.property][1]);
+        } else {
+            _this.object[_this.property][1] = Math.max(value, _this.object[_this.property][0]);
         }
 
-        function loadGLBModel() {
-            // GLTFLoader to load .glb files
-            const loader = new GLTFLoader();
-            loader.load('build/assets/tree.glb', function (gltf) {
-                model = gltf.scene;
-                model.updateMatrixWorld(true,true);
-                let tf = SkeletonUtils.clone(gltf.scene);
-                tf.updateMatrixWorld(true,true);
-                const combinedBoundingBox = new THREE.Box3().setFromObject(tf);
+        _this.updateDisplay();
+    }
 
-                // Log the size of the combined bounding box
-                console.log('Combined Bounding Box Size:', combinedBoundingBox.getSize(new THREE.Vector3()));
-                scene.add(tf);
-                // Visualize the combined bounding box with BoxHelper
-                const boxHelper = new THREE.BoxHelper(new THREE.Mesh(new THREE.BoxGeometry(
-                    combinedBoundingBox.max.x - combinedBoundingBox.min.x,
-                    combinedBoundingBox.max.y - combinedBoundingBox.min.y,
-                    combinedBoundingBox.max.z - combinedBoundingBox.min.z
-                )), 0xff0000);
+    function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseDrag);
+        document.removeEventListener('mouseup', onMouseUp);
+    }
 
-                boxHelper.position.set(
-                    (combinedBoundingBox.max.x + combinedBoundingBox.min.x) / 2,
-                    (combinedBoundingBox.max.y + combinedBoundingBox.min.y) / 2,
-                    (combinedBoundingBox.max.z + combinedBoundingBox.min.z) / 2
-                );
+    this.__minHandle.addEventListener('mousedown', function(e) {
+        document.addEventListener('mousemove', onMouseDrag);
+        document.addEventListener('mouseup', onMouseUp);
+    });
 
-                scene.add(boxHelper);
+    this.__maxHandle.addEventListener('mousedown', function(e) {
+        document.addEventListener('mousemove', onMouseDrag);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+};
 
-                console.log('Combined Bounding Box:', combinedBoundingBox);
+dat.gui.RangeController.prototype = Object.create(dat.controllers.NumberController.prototype);
 
-                // Find the root bone (the bone that actually moves)
-                let potentialRootBones = [];
-                tf.traverse((object) => {
-                    if (object.isBone) {
-                        if (object.name.toLowerCase().includes('hips') || object.name.toLowerCase().includes('root')) {
-                            potentialRootBones.push(object);
-                        }
-                    }
-                });
+dat.gui.RangeController.prototype.updateDisplay = function() {
+    var min = this.object[this.property][0];
+    var max = this.object[this.property][1];
 
-                if (potentialRootBones.length > 0) {
-                    // Prioritize 'hips' over 'root' if both exist
-                    rootBone = potentialRootBones.find(bone => bone.name.toLowerCase().includes('hips')) || potentialRootBones[0];
-                    console.log('Root bone found:', rootBone.name);
-                } else {
-                    console.warn('No root bone found.');
-                }
+    var minPercentage = (min - this.__min) / (this.__max - this.__min) * 100;
+    var maxPercentage = (max - this.__min) / (this.__max - this.__min) * 100;
 
-                if (!rootBone) {
-                    console.warn('Root bone not found. Using the first bone in the skeleton.');
-                    tf.traverse((object) => {
-                        if (object.isBone && !rootBone) {
-                            rootBone = object;
-                        }
-                    });
-                }
+    this.__minHandle.style.left = minPercentage + '%';
+    this.__maxHandle.style.left = maxPercentage + '%';
+    this.__range.style.left = minPercentage + '%';
+    this.__range.style.width = (maxPercentage - minPercentage) + '%';
 
-                // Set up animation
-                mixer = new THREE.AnimationMixer(tf);
-                if (gltf.animations && gltf.animations.length > 0) {
-                    const firstAnimation = gltf.animations[1];
-                    const action = mixer.clipAction(firstAnimation);
-                    action.setLoop(THREE.LoopRepeat);
-                    action.play();
-                }
-            }, undefined, function (error) {
-                console.error(error);
-            });
-        }
+    return this;
+};
 
-        function animate() {
-            requestAnimationFrame(animate);
+// Extend dat.GUI to add the new controller
+dat.GUI.prototype.addRange = function(object, property, min, max, step) {
+    return this.add(new dat.gui.RangeController(object, property, min, max, step));
+};
 
-            const delta = clock.getDelta();
-            if (mixer) {
-                mixer.update(delta);
+        // Step 3: Create a GUI and use the custom range controller
+        const gui = new dat.GUI();
+        const obj = { value: 50 };
 
-                // Store the initial position of the root bone
-                if (rootBone && !rootBone.userData.initialPosition) {
-                    rootBone.userData.initialPosition = rootBone.position.clone();
-                }
+        // Add the custom range slider
+        gui.addRange(obj, 'value', 0, 100, 2,1);
 
-                // Reset the root bone position to its initial position
-                if (rootBone && rootBone.userData.initialPosition) {
-                    rootBone.position.copy(rootBone.userData.initialPosition);
-                }
-            }
-
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        // Handle window resize
-        window.addEventListener('resize', function () {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        // Test object to update in real-time
+        obj.value = 50;
     </script>
 </body>
 </html>

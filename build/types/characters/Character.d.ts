@@ -14,7 +14,7 @@ import { Vehicle } from '../vehicles/Vehicle';
 import { CapsuleCollider } from '../physics/colliders/CapsuleCollider';
 import { VehicleEntryInstance } from './VehicleEntryInstance';
 import { GroundImpactData } from './GroundImpactData';
-import { AnimationClip } from 'three';
+import { AnimationAction, AnimationClip } from 'three';
 import { EntityType } from '../enums/EntityType';
 export declare class Character extends THREE.Object3D implements IWorldEntity {
     updateOrder: number;
@@ -25,7 +25,7 @@ export declare class Character extends THREE.Object3D implements IWorldEntity {
     materials: THREE.Material[];
     mixer: THREE.AnimationMixer;
     animations: AnimationClip[];
-    animationMapping: {
+    animationsMapping: {
         driving: string;
         drop_idle: string;
         drop_running: string;
@@ -75,7 +75,16 @@ export declare class Character extends THREE.Object3D implements IWorldEntity {
     rotationSimulator: RelativeSpringSimulator;
     viewVector: THREE.Vector3;
     actions: {
-        [key: string]: KeyBinding;
+        up: KeyBinding;
+        down: KeyBinding;
+        left: KeyBinding;
+        right: KeyBinding;
+        run: KeyBinding;
+        jump: KeyBinding;
+        enter: KeyBinding;
+        enter_passenger: KeyBinding;
+        seat_switch: KeyBinding;
+        interactKey: KeyBinding;
     };
     characterCapsule: CapsuleCollider;
     rayResult: CANNON.RaycastResult;
@@ -124,7 +133,8 @@ export declare class Character extends THREE.Object3D implements IWorldEntity {
     displayControls(): void;
     inputReceiverUpdate(timeStep: number): void;
     mapAnimation(from: string, to: string): void;
-    setAnimation(clipName: string, fadeIn: number, loop?: boolean): number;
+    importantAction: AnimationAction;
+    setAnimation(clipName: string, fadeIn: number, loop?: boolean, important?: boolean): number;
     springMovement(timeStep: number): void;
     springRotation(timeStep: number): void;
     getLocalMovementDirection(): THREE.Vector3;

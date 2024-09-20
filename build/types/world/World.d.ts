@@ -42,7 +42,6 @@ export declare class World {
     readonly paths: Path[];
     scenarioGUIFolder: any;
     updatables: IUpdatable[];
-    objects: THREE.Object3D[];
     loadingManager: LoadingManager;
     private lastScenarioID;
     constructor();

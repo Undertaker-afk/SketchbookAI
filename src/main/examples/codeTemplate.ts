@@ -1,7 +1,7 @@
 export {};
 
 // IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
+// IMPORTANT: Always expose adjustable parameters to world.gui
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
 //#region Player Class
@@ -34,7 +34,7 @@ async function main() {
     });
 
     const player = new Player(playerModel);
-    expose(player.moveSpeed, "player speed");
+    world.gui.add(player, "moveSpeed").name("Player Speed").min(0).max(10).step(0.1);
     player.setPosition(0, 0, -5);
     world.add(player);
 

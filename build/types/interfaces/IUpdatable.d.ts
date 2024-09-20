@@ -1,4 +1,4 @@
 export interface IUpdatable {
-    updateOrder: number;
+    updateOrder?: number;
     update(timestep: number, unscaledTimeStep: number): void;
 }

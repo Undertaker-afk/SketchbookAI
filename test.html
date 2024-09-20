@@ -77,6 +77,15 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
             });
 
+        // Add a range slider for controlling the rotation speed
+        const rotationControl = {
+            speed: 0.01
+        };
+
+        gui.add(rotationControl, 'speed', 0, 0.1, 0.001).name('Rotation Speed');
+
+        
+
         })();
         function expose(obj, name = obj.name) {
             const folder = world.gui.__folders[name] || world.gui.addFolder(name);

@@ -131,9 +131,10 @@ world.add(${modelName});
 //CRITICAL: Uncomment and assign correct scale immediately!
 //AutoScale(${modelName}Model.scene, 5);
 ${setPivot ? `SetPivotCenter(${modelName}Model);` : ''}
-let ${modelName} = new BaseObject(${modelName}Model.scene);
+let ${modelName} = new BaseObject(${modelName}Model.scene,0,'none');
 world.add(${modelName});
 `;
+
     code += `\n${intersectionPoint ? `${modelName}.setPosition(${intersectionPoint.x.toFixed(2)}, ${intersectionPoint.y.toFixed(2)}, ${intersectionPoint.z.toFixed(2)});` : ''}`
 
     return code;
