@@ -1,90 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Two Boxes with dat.gui</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
 </head>
+
 <body>
     <script>
-        class Box {
-            constructor(size = 1, color = 0x00ff00) {
-                this.size = size;
-                this.color = color;
-                this.mesh = this.createMesh();
+        (function () {
+            class Box {
+                constructor(size = 1, color = 0x00ff00) {
+                    this.size = size;
+                    this.color = color;
+                    this.mesh = this.createMesh();
+                }
+
+                createMesh() {
+                    const geometry = new THREE.BoxGeometry(this.size, this.size, this.size);
+                    const material = new THREE.MeshBasicMaterial({ color: this.color, wireframe: true });
+                    return new THREE.Mesh(geometry, material);
+                }
             }
 
-            createMesh() {
-                const geometry = new THREE.BoxGeometry(this.size, this.size, this.size);
-                const material = new THREE.MeshBasicMaterial({ color: this.color, wireframe: true });
-                return new THREE.Mesh(geometry, material);
-            }
-        }
-
-        // Set up the scene, camera, and renderer
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
-
-        // Create two instances of the Box class
-        const box1 = new Box(1, 0x00ff00);
-        const box2 = new Box(1, 0xff0000);
-        box2.mesh.position.x = 2;
-        scene.add(box1.mesh);
-        scene.add(box2.mesh);
-
-        // Position the camera
-        camera.position.z = 5;
-
-        // Set up dat.gui
-        const gui = new dat.GUI();
-        window.world = { gui }; // Add this line to create a global world object with gui
-
-        // Use expose function to control both boxes with the same sliders
-        expose(box1.mesh, 'Box');
-        expose(box2.mesh, 'Box');
-
-        // Animation loop
-        function animate() {
-            requestAnimationFrame(animate);
-            box1.mesh.rotation.y += 0.01;
-            box2.mesh.rotation.y += 0.01;
-            renderer.render(scene, camera);
-        }
-
-        animate();
-
-        // Handle window resizing
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+            // Set up the scene, camera, and renderer
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+            document.body.appendChild(renderer.domElement);
 
-        function expose(obj, name = obj.name) {
-            let folder = world.gui.__folders[name];
-            if (!folder) {
-                folder = world.gui.addFolder(name);
+            // Create two instances of the Box class
+            const box1 = new Box(1, 0x00ff00);
+            const box2 = new Box(1, 0xff0000);
+            box2.mesh.position.x = 2;
+            scene.add(box1.mesh);
+            scene.add(box2.mesh);
+
+            // Position the camera
+            camera.position.z = 5;
+
+            // Set up dat.gui
+            const gui = new dat.GUI();
+            window.world = { gui }; // Add this line to create a global world object with gui
+
+            // Use expose function to control both boxes with the same sliders
+            expose(box1.mesh, 'Box');
+            expose(box2.mesh, 'Box');
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                box1.mesh.rotation.y += 0.01;
+                box2.mesh.rotation.y += 0.01;
+                renderer.render(scene, camera);
             }
+
+            animate();
+
+            // Handle window resizing
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+        })();
+        function expose(obj, name = obj.name) {
+            const folder = world.gui.__folders[name] || world.gui.addFolder(name);
             const storageKey = `${name}_transform`;
             const savedValues = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+            world.namedObjects = world.namedObjects || {};
+            world.namedObjects[name] = world.namedObjects[name] || [];
+            world.namedObjects[name].push(obj);
 
             ['position', 'rotation', 'scale'].forEach(prop => {
                 ['x', 'y', 'z'].forEach(axis => {
                     const controlName = `${prop.charAt(0).toUpperCase() + prop.slice(1)} ${axis.toUpperCase()}`;
-                    let controller = folder.__controllers.find(c => c.property === axis && c.__li.innerText.includes(controlName));
-                    
-                    if (!controller) {
-                        controller = folder.add(obj[prop], axis, -10.0, 10.0, 0.01).name(controlName);
-                    }
+                    let controller = folder.__controllers.find(c => c.property === axis && c.__li.innerText.includes(controlName)) ||
+                                     folder.add(obj[prop], axis, -10.0, 10.0, 0.01).name(controlName);
+
+                    controller.object = obj[prop];
 
                     if (savedValues[controlName] !== undefined) {
                         obj[prop][axis] = savedValues[controlName];
@@ -94,13 +103,7 @@
                     controller.onChange(value => {
                         savedValues[controlName] = value;
                         localStorage.setItem(storageKey, JSON.stringify(savedValues));
-                        
-                        // Update all objects with the same name
-                        scene.traverse((child) => {
-                            if (child.isObject3D && child !== obj && child[prop]) {
-                                child[prop][axis] = value;
-                            }
-                        });
+                        world.namedObjects[name].forEach(namedObj => namedObj[prop][axis] = value);
                     });
                 });
             });
@@ -108,4 +111,5 @@
         }
     </script>
 </body>
+
 </html>
