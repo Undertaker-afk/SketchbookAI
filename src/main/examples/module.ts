@@ -1,7 +1,7 @@
 
 export {};
 
-// IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
+// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always exoise  expose(variable: any, name: string) to expose the parameters to GUI
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
@@ -32,7 +32,7 @@ async function main() {
 
     const playerModel = await loadAsync('build/assets/boxman.glb');
     expose(playerModel.scene, "player");
-    AutoScale(playerModel.scene, 1.7);
+    AutoScaleInMeters(playerModel.scene, 1.7);
     addMethodListener(world, world.update, () => {
         TWEEN.update();
     });
@@ -62,7 +62,7 @@ async function main() {
         
 
         const treeClone = treeModel.scene.clone();
-        AutoScale(treeClone, 10); // Scale tree based on treeSize
+        AutoScaleInMeters(treeClone, 10); // Scale tree based on treeSize
 
 
         let tree = new BaseObject(treeClone, 0, 'none', CANNON.Body.STATIC); // No mass for the trees

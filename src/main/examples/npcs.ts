@@ -2,7 +2,7 @@
 
 export { }
 
-// IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
+// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = "Idle"; animationsMapping.run = "Run"; animationsMapping.walk = "Walk"; animationsMapping.jump = "Jump";
 
@@ -24,7 +24,7 @@ document.body.appendChild(textPrompt);
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
-AutoScale(playerModel.scene, 1.7);
+AutoScaleInMeters(playerModel.scene, 1.7);
 addMethodListener(world, world.update, () => {
     TWEEN.update();
 });

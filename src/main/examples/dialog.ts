@@ -1,6 +1,6 @@
 export {};
 
-// IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
+// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
@@ -47,7 +47,7 @@ class Player extends Character {
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
-AutoScale(playerModel.scene, 1.7);
+AutoScaleInMeters(playerModel.scene, 1.7);
 const player = new Player(playerModel);
 expose(player.moveSpeed, "player speed");
 player.setPosition(0, 0, -5);

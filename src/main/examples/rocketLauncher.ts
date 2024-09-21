@@ -192,7 +192,7 @@ class Weapon extends BaseObject implements Interactable {
     }
     async shootGrenade(): Promise<void> {
         const grenadeModel = await loadAsync('build/assets/grenade.glb');
-        AutoScale(grenadeModel.scene, 0.1);
+        AutoScaleInMeters(grenadeModel.scene, 0.1);
         const grenade = new Grenade(grenadeModel.scene, .1);
         const position = this.getWorldPosition(new THREE.Vector3());
         grenade.setPosition(position.x, position.y, position.z);
@@ -275,7 +275,7 @@ addMethodListener(world,"update",function(deltaTime:number){
 
 //#region Rocket Launcher Initialization
 const rocketLauncherModel = await loader.loadAsync('build/assets/rocketlauncher.glb');
-AutoScale(rocketLauncherModel.scene, 0.5);
+AutoScaleInMeters(rocketLauncherModel.scene, 0.5);
 const rocketLauncher = new Weapon(rocketLauncherModel.scene);
 world.add(rocketLauncher);
 rocketLauncher.setPosition(1, 0, -2);

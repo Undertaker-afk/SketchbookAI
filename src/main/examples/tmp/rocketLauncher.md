@@ -113,7 +113,7 @@ class Weapon extends BaseObject {
             return gltf.scene;
         });
         grenadeModel.then(grenadeModel => {
-            AutoScale(grenadeModel, 0.1);
+            AutoScaleInMeters(grenadeModel, 0.1);
             var grenade = new BaseObject(grenadeModel, 0.1);
             grenade.setPosition(this.getWorldPosition().clone());
 

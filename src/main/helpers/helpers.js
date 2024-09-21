@@ -210,7 +210,7 @@ class BaseObject extends THREE.Object3D {
  * @param {THREE.Group} model - The model to be scaled.
  * @param {number} [approximateSizeInMeters=5] - The approximate size in meters to scale the model to.
  */
-function AutoScale(model, approximateSizeInMeters = 5) {
+function AutoScaleInMeters(model, approximateSizeInMeters = 5) {
     
       // Create a single bounding box for all objects combined
       const boundingBox = new THREE.Box3();

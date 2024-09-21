@@ -1,5 +1,5 @@
 export {};
-// IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
+// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
 
 //#region World Setup
@@ -16,7 +16,7 @@ document.body.appendChild(crosshair);
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
-AutoScale(playerModel.scene, 1.7);
+AutoScaleInMeters(playerModel.scene, 1.7);
 addMethodListener(world, world.update, () => {
     TWEEN.update();
 });
@@ -509,7 +509,7 @@ class Zombie extends Character {
 // Create multiple zombies
 const numZombies = 5;
 const zombieModel = await loadAsync('build/assets/zombie.glb');
-AutoScale(zombieModel.scene, 1.7);
+AutoScaleInMeters(zombieModel.scene, 1.7);
 const zombies: Zombie[] = [];
 for (let i = 0; i < numZombies; i++) {    
     zombies.push(new Zombie(zombieModel));

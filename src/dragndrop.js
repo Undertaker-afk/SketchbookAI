@@ -129,7 +129,7 @@ world.add(${modelName});
 
     else code += `
 //CRITICAL: Uncomment and assign correct scale immediately!
-//AutoScale(${modelName}Model.scene, 5);
+//AutoScaleInMeters(${modelName}Model.scene, 5);
 ${setPivot ? `SetPivotCenter(${modelName}Model);` : ''}
 let ${modelName} = new BaseObject(${modelName}Model.scene,0,'concave');
 world.add(${modelName});

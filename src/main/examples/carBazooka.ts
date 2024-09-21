@@ -15,7 +15,7 @@ let player: Player;
 
 
 
-// IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
+// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
@@ -155,7 +155,7 @@ async function main() {
     // #region Player Setup
     const playerModel = await loadAsync('build/assets/boxman.glb');
     expose(playerModel.scene, "player");
-    AutoScale(playerModel.scene, 1.7);
+    AutoScaleInMeters(playerModel.scene, 1.7);
     player = new Player(playerModel);
     expose(player.moveSpeed, "player speed");
     player.setPosition(0, 0, -5);
@@ -165,7 +165,7 @@ async function main() {
 
     // #region  Car Setup
     let acarModel = await new GLTFLoader().loadAsync("build/assets/car.glb");
-    AutoScale(acarModel.scene, 5);
+    AutoScaleInMeters(acarModel.scene, 5);
     let acar = new MyCar(acarModel);
     world.add(acar);
     acar.setPosition(0.57, -0.53, -3.45);
@@ -179,7 +179,7 @@ async function main() {
     // #region Rocket Launcher Setup
     const rocketLauncherModel = await loadAsync('build/assets/rocketlauncher.glb');
     expose(rocketLauncherModel.scene, "carRocketLauncher");
-    AutoScale(rocketLauncherModel.scene, 0.5);
+    AutoScaleInMeters(rocketLauncherModel.scene, 0.5);
     const rocketLauncher = new RocketLauncher(rocketLauncherModel.scene);
     // Add rocket launcher to car rooftop
     rocketLauncher.setPosition(0, 0.9, 0.1); // Adjust position on rooftop 

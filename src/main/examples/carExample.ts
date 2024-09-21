@@ -2,7 +2,7 @@ export { };
 
 
 
-// IMPORTANT: Always use function AutoScale(model: any, approximateSizeInMeters: number) to scale the model
+// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
 // IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
@@ -15,7 +15,7 @@ document.body.appendChild(textPrompt);
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
 expose(playerModel.scene, "player");
-AutoScale(playerModel.scene, 1.7);
+AutoScaleInMeters(playerModel.scene, 1.7);
 addMethodListener(world, world.update, () => {
     TWEEN.update();
 });
@@ -40,7 +40,7 @@ player.takeControl();
     
 
 let acarModel = await new GLTFLoader().loadAsync("build/assets/car2.glb");
-AutoScale(acarModel.scene, 5);
+AutoScaleInMeters(acarModel.scene, 5);
 let acar = new MyCar(acarModel);
 world.add(acar);
 acar.setPosition(0.57, -0.53, -3.45);
