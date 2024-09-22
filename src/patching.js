@@ -1,3 +1,5 @@
+
+
 var defaultMaterial = new CANNON.Material('defaultMaterial');
 defaultMaterial.friction = 0.3;
 
@@ -19,18 +21,40 @@ CANNON.Body = (function(Body) {
 
     return ExtendedBody;
 })(CANNON.Body);
+function PatchClone() {
+    THREE.Object3D.prototype.clone = (function (originalClone) {
+        return function () {
 
-THREE.Object3D.prototype.clone = (function (originalClone) {
-    return function () {
-        
-        let oldClone = this.clone;
-        this.clone = originalClone;
-        let clone = SkeletonUtils.clone(this);
-        this.clone = clone.clone = oldClone;        
-        return clone;
-    };
-})(THREE.Object3D.prototype.clone);
 
+            let oldClone = this.clone;
+            this.clone = originalClone;
+            let clone = SkeletonUtils.clone(this);
+            if (this.userData.isGLTF) {
+                let folder;
+                let originalSize = clone.scale.length();
+                if (!gui.__folders[clone.name]) {
+                    clone.size = 1;
+                    folder = gui.addFolder(clone.name);
+                    folder.add(clone, 'visible').name('Visible');
+                    folder.add(clone, 'size', .1, 10).name('Size');
+                } else {
+                    folder = gui.__folders[clone.name];
+                }
+                let visible = folder.__controllers.find(controller => controller.property === 'visible');
+                visible.onChange((value) => {
+                    clone.visible = value;
+                });
+                let size = folder.__controllers.find(controller => controller.property === 'size');
+                size.onChange((value) => {
+                    clone.scale.setScalar(originalSize * value);
+                });
+            }
+
+            this.clone = clone.clone = oldClone;
+            return clone;
+        };
+    })(THREE.Object3D.prototype.clone);
+}
 CANNON.Body.prototype.addEventListener = (function(originalAddEventListener) {
     return function(type, listener) {
         let animationFrameId;
@@ -82,6 +106,7 @@ class GLTFMaterialsPbrSpecularGlossinessExtension {
 (function GLTFLoader_LoadCache() {
     const gltfCache = new Map();
     const originalLoad = GLTFLoader.prototype.load;
+    THREE.Cache.enabled=true;
     
     
     GLTFLoader.prototype.load = function (url, onLoad, onProgress, onError) {
@@ -99,6 +124,8 @@ class GLTFMaterialsPbrSpecularGlossinessExtension {
 
         originalLoad.call(this, url,
             (gltf) => {
+                gltf.scene.name = url;
+                gltf.userData.isGLTF = true;
                 gltfCache.set(url, gltf);
                 if (onLoad) onLoad(Utils.cloneGltf(gltf));
             },
@@ -108,7 +135,6 @@ class GLTFMaterialsPbrSpecularGlossinessExtension {
     };
 })();
 
-THREE.Cache.enabled=true;
 var glbFiles = {};
 
 (function GLTFLoader_LoadNotFound() {

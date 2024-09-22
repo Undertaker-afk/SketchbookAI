@@ -40,33 +40,29 @@ async function main() {
 
     player.takeControl();
 
-    // Add random size trees
-    const treeModel = await loadAsync('build/assets/tree.glb'); // Replace 'build/assets/tree.glb' with the actual path to your tree model
+    const treeModel = await loadAsync('build/assets/tree.glb');
 
-    const numTrees = 10; // Adjust the number of trees as needed
+    const numTrees = 10;
     
-    let treeSizeControl = world.gui.add({treeSize: 1}, 'treeSize', 0.1, 10).name("Tree Size").step(.1); // Add GUI control for tree size
+    let treeSizeControl = world.gui.add({treeSize: 1}, 'treeSize', 0.1, 10).name("Tree Size").step(.1);
 
     for (let i = 0; i < numTrees; i++) {
 
-        const randomX = Math.random() * 50 - 25; // Adjust the range for X position
-        const randomZ = Math.random() * 50 - 25; // Adjust the range for Z position
-        const randomScale = Math.random() + 0.5; // Adjust the range for tree size based on treeSize
+        const randomX = Math.random() * 50 - 25;
+        const randomZ = Math.random() * 50 - 25;
+        const randomScale = Math.random() + 0.5;
         
 
         const treeClone = treeModel.scene.clone();
-        AutoScaleInMeters(treeClone, treeSizeControl.getValue()); // Scale tree based on treeSize
+        AutoScaleInMeters(treeClone, treeSizeControl.getValue());
 
-
-        let tree = new BaseObject(treeClone, 0, 'none', CANNON.Body.STATIC); // No mass for the trees
-        // closure to apply random scale when tree size is changed in the GUI
-        (function(tree: BaseObject, randomScale: number) {
-            treeSizeControl.onChange(function(value: number) { // When the tree size is changed in the GUI
-                tree.scale.setScalar(randomScale * value); // Apply random scale
-            });
-        })(tree, randomScale);
-        tree.scale.setScalar(randomScale * treeSizeControl.getValue()); // Apply random scale
-        tree.setPosition(randomX, 0, randomZ); // Set the random position
+        let tree = new BaseObject(treeClone, 0, 'none', CANNON.Body.STATIC);
+        treeSizeControl.onChange(function (value: number) {
+            tree.scale.setScalar(randomScale * value);
+        });
+        
+        tree.scale.setScalar(randomScale * treeSizeControl.getValue());
+        tree.setPosition(randomX, 0, randomZ);
         world.add(tree);
     }
 

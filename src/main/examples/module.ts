@@ -1,7 +1,7 @@
 export {};
 
 // IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always expose adjustable parameters to world.gui
+// IMPORTANT: Always exoise  expose(variable: any, name: string) to expose the parameters to GUI
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
 //#region Player Class
@@ -34,11 +34,43 @@ async function main() {
     });
 
     const player = new Player(playerModel);
+    
     world.gui.add(player, "moveSpeed").name("Player Speed").min(0).max(10).step(0.1);
     player.setPosition(0, 0, -5);
     world.add(player);
 
     player.takeControl();
+
+    // Add random size trees
+    const treeModel = await loadAsync('build/assets/tree.glb'); // Replace 'build/assets/tree.glb' with the actual path to your tree model
+
+    const numTrees = 10; // Adjust the number of trees as needed
+    
+    let treeSizeControl = world.gui.add({treeSize: 1}, 'treeSize', 0.1, 10).name("Tree Size").step(.1); // Add GUI control for tree size
+
+    for (let i = 0; i < numTrees; i++) {
+
+        const randomX = Math.random() * 50 - 25; // Adjust the range for X position
+        const randomZ = Math.random() * 50 - 25; // Adjust the range for Z position
+        const randomScale = Math.random() + 0.5; // Adjust the range for tree size based on treeSize
+        
+
+        AutoScaleInMeters(treeModel.scene, treeSizeControl.getValue()); // Scale tree based on treeSize
+
+
+        let tree = new BaseObject(treeModel.scene, 0, 'none', CANNON.Body.STATIC); // No mass for the trees
+        // closure to apply random scale when tree size is changed in the GUI
+        
+            treeSizeControl.onChange(function(value: number) { // When the tree size is changed in the GUI
+                tree.scale.setScalar(randomScale * value); // Apply random scale
+            });
+        
+        tree.scale.setScalar(randomScale * treeSizeControl.getValue()); // Apply random scale
+        tree.setPosition(randomX, 0, randomZ); // Set the random position
+        world.add(tree);
+    }
+
+
 }
 //#endregion
 

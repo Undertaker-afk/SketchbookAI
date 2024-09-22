@@ -531,7 +531,8 @@ export class World
 			Sun_Rotation: 145,
 		};
 
-		const gui = this.gui = new dat.GUI();
+		const gui = globalThis.gui = this.gui = new dat.GUI();
+		
 
 		// Scenario
 		this.scenarioGUIFolder = gui.addFolder('Scenarios');

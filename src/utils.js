@@ -118,6 +118,7 @@ function InitVue(obj, args = {}) {
 var snapshot;
 function ResetState(){}
 function SaveState() {
+    PatchClone();
     snapshot = {
         reset: [],
         graphicsWorld: world.graphicsWorld.children.slice(),
@@ -160,6 +161,7 @@ function SaveState() {
         world.vehicles.length = 0;
         world.vehicles.push(...snapshot.vehicles);
         world.timeScaleTarget = 1;
+        
         Object.keys(world.gui.__folders).reverse().forEach(key => {
             if (!snapshot.folders[key]) {
                 world.gui.removeFolder(world.gui.__folders[key]);

@@ -1,5 +1,4 @@
 import '../css/main.css';
-
 import * as THREEImport from 'three';
 import * as CANNONImport from 'cannon-es';
 
@@ -14,6 +13,7 @@ globalThis.CharacterAI = {
 globalThis.FollowTarget = FollowTarget;
 globalThis.FollowPath = FollowPath;
 globalThis.RandomBehaviour = RandomBehaviour;
+globalThis.gui = globalThis.dat?.GUI?.prototype;
 
 
 import {Car} from './vehicles/Car';
@@ -87,6 +87,7 @@ globalThis.SkeletonUtils = SkeletonUtils;
 
 
 import Swal from 'sweetalert2';
+import * as datGui from '../lib/utils/dat.gui';
 globalThis.Swal = Swal.mixin({
     toast: true,
     onOpen: (toast) => {
