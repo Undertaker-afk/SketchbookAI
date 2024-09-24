@@ -36,8 +36,27 @@ function PatchClone() {
                     clone.size = 1;
                     folder = gui.addFolder(clone.name);
                     folder.add(clone, 'visible').name('Visible');
-                    folder.add(clone, 'size', .1, 10).name('Size');
+                    folder.add(clone, 'size').min(0.001).step(0.001).name('Size');
                     folder.add(clone.position, 'y', -10, 10).name('Y Offset').step(0.01); // Add Y offset control
+                    
+                    // Add button to replace GLB model
+                    folder.add({
+                        replaceModel: () => {
+                            const fileName = clone.userData.filePath.split('/').pop().split('.')[0];
+                            picker.openModelPicker(fileName, async (downloadUrl) => {
+                                const response = await fetch(downloadUrl);
+                                const arrayBuffer = await response.arrayBuffer();
+                                navigator.serviceWorker.controller.postMessage({
+                                    action: 'uploadFiles',
+                                    files: [{ name: clone.userData.filePath, buffer: arrayBuffer }]
+                                });
+                                gltfCache.delete(clone.userData.filePath);
+                                THREE.Cache.remove(clone.userData.filePath);
+                                await new Promise(resolve => setTimeout(resolve, 100));                                
+                                chat.switchVariant(chat.currentVariant);
+                            });
+                        }
+                    }, 'replaceModel').name('Replace Model');
                 } else {
                     folder = gui.__folders[clone.name];
                 }
@@ -108,8 +127,8 @@ class GLTFMaterialsPbrSpecularGlossinessExtension {
 
 
 
+const gltfCache = new Map();
 (function GLTFLoader_LoadCache() {
-    const gltfCache = new Map();
     const originalLoad = GLTFLoader.prototype.load;
     THREE.Cache.enabled=true;
     
@@ -131,6 +150,7 @@ class GLTFMaterialsPbrSpecularGlossinessExtension {
             (gltf) => {
                 gltf.scene.name = url;
                 gltf.userData.isGLTF = true;
+                gltf.userData.filePath = url;
                 gltfCache.set(url, gltf);
                 if (onLoad) onLoad(Utils.cloneGltf(gltf));
             },
