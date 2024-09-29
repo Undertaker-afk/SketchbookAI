@@ -2,10 +2,6 @@
 
 export { }
 
-// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
-// IMPORTANT: Assign animation names like this: animationsMapping.idle = "Idle"; animationsMapping.run = "Run"; animationsMapping.walk = "Walk"; animationsMapping.jump = "Jump";
-
 
 interface Interactable {
     interact(player: Player): void;
@@ -23,7 +19,6 @@ textPrompt.style.cssText = "position: absolute; top: 50%; left: 50%; transform: 
 document.body.appendChild(textPrompt);
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
-expose(playerModel.scene, "player");
 AutoScaleInMeters(playerModel.scene, 1.7);
 addMethodListener(world, "update", () => {
     TWEEN.update();
@@ -40,8 +35,7 @@ class Player extends Character {
     }
 }
 
-const player = new Player(playerModel);
-expose(player.moveSpeed, "player speed");
+const player = new Player(playerModel.scene);
 player.setPosition(0, 0, -5);
 world.add(player);
 
@@ -52,7 +46,7 @@ class NPC extends Character implements Interactable {
     dialog: string;
 
     constructor(model: GLTF, dialog: string) {
-        super(model);
+        super(model.scene);
         this.dialog = dialog;
     }
 

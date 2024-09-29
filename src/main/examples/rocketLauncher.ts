@@ -24,7 +24,6 @@ interface Interactable {
 const interactableObjects: Interactable[] = [];
 const loader = new GLTFLoader();
 const playerModel = await loader.loadAsync('build/assets/boxman.glb');
-expose(playerModel.scene, "player");
 //#endregion
 
 //#region Player Class
@@ -169,7 +168,7 @@ class Weapon extends BaseObject implements Interactable {
     shootDelay: number;
     lastShootTime: number;
 
-    constructor(model: THREE.Group) {
+    constructor(model: THREE.Object3D) {
         super(model, 0.1);
         this.shootDelay = 1000;
         this.lastShootTime = 0;
@@ -208,7 +207,7 @@ class Weapon extends BaseObject implements Interactable {
 
 //#region Grenade Class
 class Grenade extends BaseObject {
-    constructor(model: THREE.Group, mass: number) {
+    constructor(model: THREE.Object3D, mass: number) {
         super(model, mass);
         this.body.collisionFilterMask = ~2; // Only collide with the world
         this.body.addEventListener('collide', this.onCollide.bind(this));
@@ -279,7 +278,6 @@ AutoScaleInMeters(rocketLauncherModel.scene, 0.5);
 const rocketLauncher = new Weapon(rocketLauncherModel.scene);
 world.add(rocketLauncher);
 rocketLauncher.setPosition(1, 0, -2);
-expose(rocketLauncherModel.scene, "rocketlauncher");
 interactableObjects.push(rocketLauncher);
 
 //#region RandomBehaviour Class

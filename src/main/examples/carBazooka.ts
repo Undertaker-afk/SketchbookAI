@@ -1,23 +1,10 @@
 export {};
 
-
-
-
-
-
-
-
-
 // #region Global Variables
 const world = new World();
 let player: Player;
 // #endregion
 
-
-
-// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
-// IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 
 addMethodListener(world, "update", () => {
     TWEEN.update();
@@ -37,7 +24,7 @@ class Player extends Character {
 
 
 class RocketLauncher extends BaseObject {
-    constructor(model: THREE.Group, public shootDelay: number = 1000, public lastShootTime: number = 0) {
+    constructor(model: THREE.Object3D, public shootDelay: number = 1000, public lastShootTime: number = 0) {
         super(model, 0.1);
     }
 
@@ -154,10 +141,8 @@ async function main() {
     await world.initialize('build/assets/world.glb');
     // #region Player Setup
     const playerModel = await loadAsync('build/assets/boxman.glb');
-    expose(playerModel.scene, "player");
     AutoScaleInMeters(playerModel.scene, 1.7);
-    player = new Player(playerModel);
-    expose(player.moveSpeed, "player speed");
+    player = new Player(playerModel.scene);
     player.setPosition(0, 0, -5);
     world.add(player);
     player.takeControl();
@@ -178,7 +163,6 @@ async function main() {
 
     // #region Rocket Launcher Setup
     const rocketLauncherModel = await loadAsync('build/assets/rocketlauncher.glb');
-    expose(rocketLauncherModel.scene, "carRocketLauncher");
     AutoScaleInMeters(rocketLauncherModel.scene, 0.5);
     const rocketLauncher = new RocketLauncher(rocketLauncherModel.scene);
     // Add rocket launcher to car rooftop

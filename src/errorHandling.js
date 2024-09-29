@@ -6,7 +6,8 @@ async function Eval(content)
     
     if(!content?.trim())
     {
-        throw "empty code";
+        console.error("empty code");
+        return;
     }
     chat.variant.lastError = '';
     SetCode(content);

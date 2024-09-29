@@ -17,6 +17,9 @@ export class InputManager extends InputManagerBase implements IUpdatable
 
 	private fButton: HTMLDivElement;
 
+	private gamepadIndex: number | null = null;
+	private gamepadThreshold: number = 0.3;
+
 	// Call the new function when the script is loaded
 	constructor(world: World, domElement: HTMLElement) {
 		super(world, domElement);
@@ -25,6 +28,7 @@ export class InputManager extends InputManagerBase implements IUpdatable
 			this.initTouchArea();
 			this.initFButton();
 		}
+		this.initGamepadListener();
 	}
 
 	private initJoystick(): void {
@@ -83,15 +87,14 @@ export class InputManager extends InputManagerBase implements IUpdatable
 			'KeyA': this.joystickVector.x < -threshold,
 			'KeyD': this.joystickVector.x > threshold
 		};
-
 		for (const [code, pressed] of Object.entries(keys)) {
-			if (this.inputReceiver) {
-				this.inputReceiver.handleKeyboardEvent(
+			this.inputReceivers.forEach(receiver => {
+				receiver.handleKeyboardEvent(
 					new KeyboardEvent(pressed ? 'keydown' : 'keyup', { code }),
 					code,
 					pressed
 				);
-			}
+			});
 		}
 	}
 
@@ -141,16 +144,113 @@ export class InputManager extends InputManagerBase implements IUpdatable
 
 	private handleFButtonPress(event: TouchEvent): void {
 		event.preventDefault();
-		if (this.inputReceiver) {
-			this.inputReceiver.handleKeyboardEvent(new KeyboardEvent('keydown', { code: 'KeyF' }), 'KeyF', true);
-		}
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleKeyboardEvent(new KeyboardEvent('keydown', { code: 'KeyF' }), 'KeyF', true);
+		});
 	}
 
 	private handleFButtonRelease(event: TouchEvent): void {
 		event.preventDefault();
-		if (this.inputReceiver) {
-			this.inputReceiver.handleKeyboardEvent(new KeyboardEvent('keyup', { code: 'KeyF' }), 'KeyF', false);
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleKeyboardEvent(new KeyboardEvent('keyup', { code: 'KeyF' }), 'KeyF', false);
+		});
+	}
+
+	private initGamepadListener(): void {
+		window.addEventListener('gamepadconnected', (e) => {
+			console.log('Gamepad connected:', e.gamepad);
+			this.gamepadIndex = e.gamepad.index;
+		});
+
+		window.addEventListener('gamepaddisconnected', (e) => {
+			console.log('Gamepad disconnected:', e.gamepad);
+			if (this.gamepadIndex === e.gamepad.index) {
+				this.gamepadIndex = null;
+			}
+		});
+	}
+
+	public update(timestep: number, unscaledTimeStep: number): void {
+		super.update(timestep, unscaledTimeStep);
+		this.handleGamepadInput();
+	}
+
+	private handleGamepadInput(): void {
+		if (this.gamepadIndex !== null) {
+			const gamepads = navigator.getGamepads();
+			const gamepad = gamepads[this.gamepadIndex];
+
+			if (gamepad) {
+				// Left stick
+				const leftX = gamepad.axes[0];
+				const leftY = gamepad.axes[1];
+
+				// Simulate WASD key presses based on left stick position
+				this.simulateWASDKeys2(leftX, -leftY);  // Invert Y-axis
+
+				// Right stick (for camera control)
+				const rightX = gamepad.axes[2];
+				const rightY = gamepad.axes[3];
+
+				if (Math.abs(rightX) > this.gamepadThreshold || Math.abs(rightY) > this.gamepadThreshold) {
+					this.simulateMouseMovement(rightX, rightY);
+				}
+
+				// Handle buttons (e.g., jump, action)
+				this.handleGamepadButtons(gamepad);
+			}
 		}
+	}
+
+	private simulateWASDKeys2(x: number, y: number): void {
+		const keys = {
+			'KeyW': y > this.gamepadThreshold,
+			'KeyS': y < -this.gamepadThreshold,
+			'KeyA': x < -this.gamepadThreshold,
+			'KeyD': x > this.gamepadThreshold
+		};
+
+		for (const [code, pressed] of Object.entries(keys)) {
+			this.inputReceivers.forEach(receiver => {
+				receiver.handleKeyboardEvent(
+					new KeyboardEvent(pressed ? 'keydown' : 'keyup', { code }),
+					code,
+					pressed
+				);
+			});
+		}
+	}
+
+	private simulateMouseMovement(x: number, y: number): void {
+		const sensitivity = 5;  // Adjust this value to change the camera movement speed
+		const movementX = x * sensitivity;
+		const movementY = y * sensitivity;
+
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleMouseMove(new MouseEvent('mousemove'), movementX, movementY);
+		});
+	}
+
+	private handleGamepadButtons(gamepad: Gamepad): void {
+		// Example: Use the first button (index 0) as jump
+		const jumpPressed = gamepad.buttons[0].pressed;
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleKeyboardEvent(
+				new KeyboardEvent(jumpPressed ? 'keydown' : 'keyup', { code: 'Space' }),
+				'Space',
+				jumpPressed
+			);
+		});
+
+		// Example: Use the second button (index 1) as action (F key)
+		const actionPressed = gamepad.buttons[1].pressed;
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleKeyboardEvent(
+				new KeyboardEvent(actionPressed ? 'keydown' : 'keyup', { code: 'KeyF' }),
+				'KeyF',
+				actionPressed
+			);
+		});
 	}
 
 }

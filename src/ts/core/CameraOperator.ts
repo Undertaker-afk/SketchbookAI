@@ -115,7 +115,7 @@ export class CameraOperator implements IInputReceiver, IUpdatable
 		{
 			if (this.characterCaller !== undefined)
 			{
-				this.world.inputManager.setInputReceiver(this.characterCaller);
+				this.world.inputManager.setInputReceivers(this.characterCaller);
 				this.characterCaller = undefined;
 			}
 		}

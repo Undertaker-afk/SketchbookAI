@@ -1,7 +1,6 @@
-
+export {};
 
 // IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always expose adjustable parameters to world.gui
 // IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
 // Remember to use getWorldPosition instead of position for THREE.Object3D
 
@@ -29,7 +28,6 @@ async function main() {
     document.body.appendChild(textPrompt);
 
     const playerModel = await loadAsync('build/assets/boxman.glb');
-    expose(playerModel.scene, "player");
     AutoScaleInMeters(playerModel.scene, 1.7);
     addMethodListener(world, "update", () => {
         TWEEN.update();
@@ -41,35 +39,6 @@ async function main() {
     world.add(player);
 
     player.takeControl();
-
-
-    const treeModel = await loadAsync('build/assets/tree.glb');
-
-    const numTrees = 10;
-    
-    let treeSizeControl = world.gui.add({treeSize: 1}, 'treeSize', 0.1, 10).name("Tree Size").step(.1);
-
-    for (let i = 0; i < numTrees; i++) {
-
-        const randomX = Math.random() * 50 - 25;
-        const randomZ = Math.random() * 50 - 25;
-        const randomScale = Math.random() + 0.5;
-        
-
-        const treeClone = treeModel.scene.clone();
-        AutoScaleInMeters(treeClone, treeSizeControl.getValue());
-
-        let tree = new BaseObject(treeClone, 0, 'none', CANNON.Body.STATIC);
-        treeSizeControl.onChange(function (value: number) {
-            tree.scale.setScalar(randomScale * value);
-        });
-        
-        tree.scale.setScalar(randomScale * treeSizeControl.getValue());
-        tree.setPosition(randomX, 0, randomZ);
-        world.add(tree);
-    }
-
-
 }
 //#endregion
 

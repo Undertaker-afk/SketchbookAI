@@ -1,14 +1,21 @@
 var Utils = Utils || {};
 
 
-function addMethodListener(object, methodName, extension) {
+function addMethodListener(object, methodName, extension, callBefore = false) {
     const originalMethod = object[methodName]//.bind(object);
     snapshot.reset.push(() => {
         object[methodName] = originalMethod;
     });
     object[methodName] = function (...args) {
-        originalMethod.call(object, ...args);
-        return extension.call(object, ...args);
+        if (!callBefore) {
+            const result = originalMethod.call(object, ...args);
+            const extensionResult = extension.call(object, ...args);
+            return extensionResult;
+        } else {
+            const extensionResult = extension.call(object, ...args);
+            const result = originalMethod.call(object, ...args);
+            return result;
+        }
     };
 }
 
@@ -251,38 +258,6 @@ function AutoScaleInMeters(model, approximateSizeInMeters = 1) {
 
 }
 
-function expose(obj, name = obj.name) {
-    requestAnimationFrame(() => {
-        try {
-            const folder = world.gui.addFolder(name);
-            const storageKey = `${name}_transform`;
-            const savedValues = JSON.parse(localStorage.getItem(storageKey) || '{}');
-
-            ['position', 'rotation', 'scale'].forEach(prop => {
-                ['x', 'y', 'z'].forEach(axis => {
-                    const name = `${prop.charAt(0).toUpperCase() + prop.slice(1)} ${axis.toUpperCase()}`;
-                    const controller = folder.add(obj[prop], axis, -10.0, 10.0, 0.01).name(name);
-
-                    if (savedValues[name] !== undefined) {
-                        obj[prop][axis] = savedValues[name];
-                        controller.updateDisplay();
-                    }
-
-                    controller.onChange(value => {
-                        savedValues[name] = value;
-                        localStorage.setItem(storageKey, JSON.stringify(savedValues));
-                    });
-                });
-            });
-        }
-        catch (e) {
-            console.log(e);
-        }
-    });
-    return obj;
-        
-    
-}
 
 
 function createUIElement(type, style) {

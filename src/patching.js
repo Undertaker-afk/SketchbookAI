@@ -65,35 +65,42 @@ function PatchClone() {
                     folder = gui.__folders[clone.name];
                 }
 
-                // Load values from localStorage
+                // Load values from localStorage and update folder
                 const storedVisible = localStorage.getItem(`${clone.name}_visible`);
                 if (storedVisible !== null) {
                     clone.visible = storedVisible === 'true';
+                    folder.visible.setValue(clone.visible);
                 }
                 const storedSize = localStorage.getItem(`${clone.name}_size`);
                 if (storedSize !== null) {
                     clone.size = parseFloat(storedSize);
                     clone.scale.setScalar(originalSize * clone.size);
+                    folder.size.setValue(clone.size);
                 }
                 const storedPosX = localStorage.getItem(`${clone.name}_posx`);
                 if (storedPosX !== null) {
                     clone.position.x = parseFloat(storedPosX);
+                    folder.posx.setValue(clone.position.x);
                 }
                 const storedPosY = localStorage.getItem(`${clone.name}_posy`);
                 if (storedPosY !== null) {
                     clone.position.y = parseFloat(storedPosY);
+                    folder.posy.setValue(clone.position.y);
                 }
                 const storedPosZ = localStorage.getItem(`${clone.name}_posz`);
                 if (storedPosZ !== null) {
                     clone.position.z = parseFloat(storedPosZ);
+                    folder.posz.setValue(clone.position.z);
                 }
                 const storedRotX = localStorage.getItem(`${clone.name}_rotx`);
                 if (storedRotX !== null) {
                     clone.rotation.x = parseFloat(storedRotX);
+                    folder.rotx.setValue(clone.rotation.x);
                 }
                 const storedRotY = localStorage.getItem(`${clone.name}_roty`);
                 if (storedRotY !== null) {
                     clone.rotation.y = parseFloat(storedRotY);
+                    folder.roty.setValue(clone.rotation.y);
                 }
 
                 folder.visible.onChange((value) => {

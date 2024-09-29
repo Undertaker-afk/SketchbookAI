@@ -299,7 +299,13 @@ export class Car extends Vehicle implements IControllable
 	public inputReceiverInit(): void
 	{
 		super.inputReceiverInit();
-
+		this.actions.throttle.eventCodes = this.controllingCharacter.actions.up.eventCodes;
+		this.actions.reverse.eventCodes = this.controllingCharacter.actions.down.eventCodes;
+		this.actions.brake.eventCodes = this.controllingCharacter.actions.jump.eventCodes;
+		this.actions.left.eventCodes = this.controllingCharacter.actions.left.eventCodes;
+		this.actions.right.eventCodes = this.controllingCharacter.actions.right.eventCodes;
+		this.actions.exitVehicle.eventCodes = this.controllingCharacter.actions.enter.eventCodes;
+		
 		this.world.updateControls([
 			{
 				keys: ['W', 'S'],

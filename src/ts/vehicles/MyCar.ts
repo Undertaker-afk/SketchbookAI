@@ -27,7 +27,7 @@ export class MyCar extends Car {
         return true;
     } 
 
-    private initCar(carModel: THREE.Group, h: number = 0.45): void {
+    private initCar(carmodel: THREE.Object3D, h: number = 0.45): void {
         // Set up wheels
         //IMPORTANT: Replace with wheel objects from model
         this.wheels = [];
@@ -79,7 +79,7 @@ export class MyCar extends Car {
             entryPoint.position.set(entryPointPositions[i][0], entryPointPositions[i][1], entryPointPositions[i][2]);
             this.add(entryPoint);
 
-            const seat = new VehicleSeat(this, seatObject, carModel);
+            const seat = new VehicleSeat(this, seatObject, carmodel);
             seat.entryPoints.push(entryPoint);
             this.seats.push(seat);
         }

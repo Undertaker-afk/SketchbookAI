@@ -1,9 +1,5 @@
 export {};
 
-// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
-// IMPORTANT: Assign animation names like this: animationsMapping.idle = Idle animation name from glb etc...
-
 const world = new World();
 await world.initialize('build/assets/world.glb');
 
@@ -46,17 +42,15 @@ class Player extends Character {
 }
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
-expose(playerModel.scene, "player");
 AutoScaleInMeters(playerModel.scene, 1.7);
-const player = new Player(playerModel);
-expose(player.moveSpeed, "player speed");
+const player = new Player(playerModel.scene);
 player.setPosition(0, 0, -5);
 world.add(player);
 player.takeControl();
 
 let aalkingModel = await new GLTFLoader().loadAsync("talking.glb");
 
-let aalking = new Character(aalkingModel);
+let aalking = new Character(aalkingModel.scene);
 //CRITICAL: Uncomment and assign hands immediately! Use aalkingModel hierarchy to find the correct bones
 // NOTE:  I'm assuming the hands are named "mixamorigRightHand_030" and "mixamorigLeftHand_010"
 aalking.rhand = aalkingModel.scene.getObjectByName("mixamorigRightHand_030");

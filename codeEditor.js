@@ -31,7 +31,10 @@ new Vue({
                     if (!className.includes("build/types/") && !three && !className.includes("peerjs/dist") && !className.startsWith("src/") &&
                      //!className.includes("tween.d.ts") && 
                      !className.includes("sweetalert2.d.ts")) return;
-                    const text = await (await fetch(className)).text();
+                    const text = await fetch(className).then(response => response.text()).catch(e => {
+                        console.error("update paths.txt", className, e);
+                        return "";
+                    });
                     
                     let code = text.replace(/export |import .*?;/gs, "");
                     //code = code.replaceAll("interface","class");

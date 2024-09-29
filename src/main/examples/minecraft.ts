@@ -12,7 +12,6 @@ document.body.appendChild(textPrompt);
 const loader = new GLTFLoader();
 
 const playerModel = await loader.loadAsync('build/assets/boxman.glb');
-expose(playerModel.scene, "player");
 
 class MinecraftPlayer extends Character {
     rhand: THREE.Object3D | null;

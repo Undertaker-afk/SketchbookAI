@@ -1,6 +1,4 @@
 export {};
-// IMPORTANT: Always use function AutoScaleInMeters(model: any, approximateSizeInMeters: number) to scale the model
-// IMPORTANT: Always use function expose(variable: any, name: string) to expose the parameters to GUI
 
 //#region World Setup
 const world = new World();
@@ -15,7 +13,6 @@ crosshair.style.cssText = "position: absolute; top: 50%; left: 50%; transform: t
 document.body.appendChild(crosshair);
 
 const playerModel = await loadAsync('build/assets/boxman.glb');
-expose(playerModel.scene, "player");
 AutoScaleInMeters(playerModel.scene, 1.7);
 addMethodListener(world, "update", () => {
     TWEEN.update();
@@ -164,7 +161,6 @@ class Player extends Character {
 
 //#region Player Setup
 const player = new Player(playerModel);
-expose(player.moveSpeed, "player speed");
 player.setPosition(0, 0, -5);
 world.add(player);
 
@@ -187,7 +183,7 @@ class Weapon extends BaseObject implements Interactable {
     isAutomatic: boolean;
     spread: number;
 
-    constructor(model: THREE.Group) {
+    constructor(model: THREE.Object3D) {
         super(model, 0.1);
         this.shootDelay = 100;
         this.lastShootTime = 0;
@@ -305,7 +301,6 @@ const pistolModel = await loadAsync('build/assets/pistol.glb');
 const pistol = new Weapon(pistolModel.scene);
 world.add(pistol);
 pistol.setPosition(1, 0, -2);
-expose(pistolModel.scene, "pistol");
 interactableObjects.push(pistol);
 //#endregion
 

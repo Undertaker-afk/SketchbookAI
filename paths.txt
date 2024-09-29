@@ -163,6 +163,7 @@ build\types\ts\world\World.d.ts
 build\types\vehicles\Airplane.d.ts 
 build\types\vehicles\Car.d.ts 
 build\types\vehicles\Helicopter.d.ts 
+build\types\vehicles\MyCar.d.ts 
 build\types\vehicles\vehicle.d.ts 
 build\types\vehicles\VehicleDoor.d.ts 
 build\types\vehicles\VehicleSeat.d.ts 
@@ -306,6 +307,7 @@ node_modules\@types\body-parser\index.d.ts
 node_modules\@types\bonjour\index.d.ts 
 node_modules\@types\connect\index.d.ts 
 node_modules\@types\connect-history-api-fallback\index.d.ts 
+node_modules\@types\dat.gui\index.d.ts 
 node_modules\@types\estree\flow.d.ts 
 node_modules\@types\estree\index.d.ts 
 node_modules\@types\express\index.d.ts 
@@ -2945,19 +2947,22 @@ node_modules\webpack-merge\dist\types.d.ts
 node_modules\webpack-merge\dist\unique.d.ts 
 node_modules\webpack-merge\dist\utils.d.ts 
 node_modules\webrtc-adapter\index.d.ts 
+src\lib\GLTFLoader.d.ts 
 src\lib\cannon\cannon.d.ts 
 src\main\global.d.ts 
+src\main\examples\2player.ts 
 src\main\examples\carBazooka.ts 
 src\main\examples\carExample.ts 
 src\main\examples\codeTemplate.ts 
 src\main\examples\dialog.ts 
+src\main\examples\football.ts 
 src\main\examples\minecraft.ts 
 src\main\examples\module.ts 
 src\main\examples\npcs.ts 
 src\main\examples\pistol.ts 
 src\main\examples\rocketLauncher.ts 
 src\main\examples\rootmotion.ts 
-src\main\helpers\MyCar.ts 
+src\main\examples\trees.ts 
 src\ts\characters\Character.ts 
 src\ts\characters\GroundImpactData.ts 
 src\ts\characters\VehicleEntryInstance.ts 
@@ -3032,6 +3037,7 @@ src\ts\physics\spring_simulation\VectorSpringSimulator.ts
 src\ts\vehicles\Airplane.ts 
 src\ts\vehicles\Car.ts 
 src\ts\vehicles\Helicopter.ts 
+src\ts\vehicles\MyCar.ts 
 src\ts\vehicles\Vehicle.ts 
 src\ts\vehicles\VehicleDoor.ts 
 src\ts\vehicles\VehicleSeat.ts 

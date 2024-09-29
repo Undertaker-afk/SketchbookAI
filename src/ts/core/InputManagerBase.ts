@@ -12,7 +12,7 @@ export class InputManagerBase implements IUpdatable
 	public domElement: any;
 	public pointerLock: any;
 	public isLocked: boolean;
-	public inputReceiver: IInputReceiver;
+	public inputReceivers: IInputReceiver[] = [];
 
 	public boundOnMouseDown: (evt: any) => void;
 	public boundOnMouseMove: (evt: any) => void;
@@ -64,18 +64,18 @@ export class InputManagerBase implements IUpdatable
 	
 	public update(timestep: number, unscaledTimeStep: number): void
 	{
-		if (this.inputReceiver === undefined && this.world !== undefined && this.world.cameraOperator !== undefined)
+		if (this.inputReceivers.length === 0 && this.world !== undefined && this.world.cameraOperator !== undefined)
 		{
-			this.setInputReceiver(this.world.cameraOperator);
+			this.setInputReceivers(this.world.cameraOperator);
 		}
 
-		this.inputReceiver?.inputReceiverUpdate(unscaledTimeStep);
+		this.inputReceivers.forEach(receiver => receiver.inputReceiverUpdate(unscaledTimeStep));
 	}
 
-	public setInputReceiver(receiver: IInputReceiver): void
+	public setInputReceivers(...receivers: IInputReceiver[]): void
 	{
-		this.inputReceiver = receiver;
-		this.inputReceiver.inputReceiverInit();
+		this.inputReceivers = receivers;
+		this.inputReceivers.forEach(receiver => receiver.inputReceiverInit());
 	}
 
 	public setPointerLock(enabled: boolean): void
@@ -115,15 +115,17 @@ export class InputManagerBase implements IUpdatable
 			}
 		}
 
-		if (this.inputReceiver !== undefined) {
-			this.inputReceiver.handleMouseButton(event, 'mouse' + event.button, true);
-		}
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleMouseButton(event, 'mouse' + event.button, true);
+		});
 	}
 
 	public onMouseMove(event: MouseEvent): void
 	{
-		if (this.inputReceiver !== undefined && this.isLocked) {
-			this.inputReceiver.handleMouseMove(event, event.movementX, event.movementY);
+		if (this.isLocked) {
+			this.inputReceivers.forEach(receiver => {
+				receiver.handleMouseMove(event, event.movementX, event.movementY);
+			});
 		}
 	}
 
@@ -134,29 +136,29 @@ export class InputManagerBase implements IUpdatable
 			this.domElement.removeEventListener('mouseup', this.boundOnMouseUp, false);
 		}
 
-		if (this.inputReceiver !== undefined) {
-			this.inputReceiver.handleMouseButton(event, 'mouse' + event.button, false);
-		}
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleMouseButton(event, 'mouse' + event.button, false);
+		});
 	}
 
 	public onKeyDown(event: KeyboardEvent): void
 	{
-		if (this.inputReceiver !== undefined) {
-			this.inputReceiver.handleKeyboardEvent(event, event.code, true);
-		}
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleKeyboardEvent(event, event.code, true);
+		});
 	}
 
 	public onKeyUp(event: KeyboardEvent): void
 	{
-		if (this.inputReceiver !== undefined) {
-			this.inputReceiver.handleKeyboardEvent(event, event.code, false);
-		}
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleKeyboardEvent(event, event.code, false);
+		});
 	}
 
 	public onMouseWheelMove(event: WheelEvent): void
 	{
-		if (this.inputReceiver !== undefined) {
-			this.inputReceiver.handleMouseWheel(event, event.deltaY);
-		}
+		this.inputReceivers.forEach(receiver => {
+			receiver.handleMouseWheel(event, event.deltaY);
+		});
 	}
 }

@@ -328,7 +328,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 			{
 				this.resetControls();
 				this.world.cameraOperator.characterCaller = this;
-				this.world.inputManager.setInputReceiver(this.world.cameraOperator);
+				this.world.inputManager.setInputReceivers(this.world.cameraOperator);
 			}
 			else if (code === 'KeyR' && pressed === true && event.shiftKey === true)
 			{
@@ -423,7 +423,8 @@ export class Character extends THREE.Object3D implements IWorldEntity
 	{
 		if (this.world !== undefined)
 		{
-			this.world.inputManager.setInputReceiver(this);
+			this.world.inputManager.setInputReceivers(this);
+			
 		}
 		else
 		{
@@ -687,7 +688,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 				if (wantsToDrive)
 				{
 					// Consider driver seats
-					if (seat.type === SeatType.Driver)
+					if (seat.type === SeatType.Driver && !seat.occupiedBy)
 					{
 						seat.seatPointObject.getWorldPosition(worldPos);
 						seatFinder.consider(seat, worldPos);
@@ -697,7 +698,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 					{
 						for (const connSeat of seat.connectedSeats)
 						{
-							if (connSeat.type === SeatType.Driver)
+							if (connSeat.type === SeatType.Driver && !connSeat.occupiedBy)
 							{
 								seat.seatPointObject.getWorldPosition(worldPos);
 								seatFinder.consider(seat, worldPos);
@@ -709,7 +710,7 @@ export class Character extends THREE.Object3D implements IWorldEntity
 				else
 				{
 					// Consider passenger seats
-					if (seat.type === SeatType.Passenger)
+					if (seat.type === SeatType.Passenger && !seat.occupiedBy)
 					{
 						seat.seatPointObject.getWorldPosition(worldPos);
 						seatFinder.consider(seat, worldPos);
@@ -735,6 +736,12 @@ export class Character extends THREE.Object3D implements IWorldEntity
 					this.triggerAction('up', true);
 					this.vehicleEntryInstance = vehicleEntryInstance;
 				}
+			}
+			else if (wantsToDrive)
+			{
+				// If no driver seat is available, try to find a passenger seat
+				vehicleEntryInstance.wantsToDrive = false;
+				this.findVehicleToEnter(false);
 			}
 		}
 	}
@@ -778,9 +785,9 @@ export class Character extends THREE.Object3D implements IWorldEntity
 
 			this.controlledObject = vehicle;
 			this.controlledObject.allowSleep(false);
+			vehicle.controllingCharacter = this;
 			vehicle.inputReceiverInit();
 
-			vehicle.controllingCharacter = this;
 		}
 	}
 
@@ -1047,9 +1054,9 @@ export class Character extends THREE.Object3D implements IWorldEntity
 		}
 		else
 		{
-			if (world.inputManager.inputReceiver === this)
+			if (world.inputManager.inputReceivers.includes(this))
 			{
-				world.inputManager.inputReceiver = undefined;
+				world.inputManager.setInputReceivers(...world.inputManager.inputReceivers.filter(receiver => receiver !== this));
 			}
 
 			// Physics pre/post step callback bindings
