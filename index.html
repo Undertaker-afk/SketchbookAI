@@ -3,6 +3,36 @@
 <head>
     <title>Sketchbook</title>
     <meta name="viewport" content="width=800, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        // Suppress webpack-dev-server errors before initializing eruda
+        const originalWebSocketOnError = WebSocket.prototype.onerror;
+        
+        eruda.init({ 
+            tool: ['console', 'elements', 'network', 'resources', 'info'],
+            useShadowDom: true,
+            defaults: {
+                displaySize: 50,
+                transparency: 0.9
+            }
+        }); 
+        eruda.hide();
+        
+        // Filter webpack-dev-server messages from eruda console
+        const erudaConsole = eruda.get('console');
+        if (erudaConsole) {
+            const originalLog = erudaConsole._log;
+            erudaConsole._log = function(type, args) {
+                if (args && args[0] && (
+                    (typeof args[0] === 'string' && args[0].includes('webpack-dev-server')) ||
+                    (args[0].isTrusted === true && !args[0].message)
+                )) {
+                    return; // Skip webpack errors
+                }
+                return originalLog.call(this, type, args);
+            };
+        }
+    </script>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@3.1.6/dist/full.min.css" rel="stylesheet" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
@@ -14,6 +44,11 @@
     
 </head>
 <style>
+:root {
+    --editor-menu-height: 40px;
+    --editor-tab-height: 40px;
+    --editor-header-height: calc(var(--editor-menu-height) + var(--editor-tab-height));
+}
 /* Styles for dat.gui save-row */
 .dg .save-row {
     background-color: #1a1a1a !important;
@@ -112,8 +147,11 @@ input::-ms-reveal {
     .suggestion-bubble:hover {
         background-color: #e0e0e0;
     }
-    /* Hide original code editor buttons */
-    #toggleEditor, #runCode {
+    /* Show toggle editor button like 3d picker */
+    #toggleEditor {
+        display: block;
+    }
+    #runCode {
         display: none !important;
     }
     /* Editor menu bar styles */
@@ -122,7 +160,7 @@ input::-ms-reveal {
         top: 0;
         left: 0;
         width: 100%;
-        height: 40px;
+        height: var(--editor-menu-height);
         background-color: #1e1e1e;
         border-bottom: 1px solid #3c3c3c;
         display: flex;
@@ -159,6 +197,196 @@ input::-ms-reveal {
         margin-left: 10px;
         flex-grow: 1;
     }
+    /* Editor tab bar styles */
+    #editorTabBar {
+        position: fixed;
+        top: var(--editor-menu-height);
+        left: 0;
+        width: 100%;
+        height: var(--editor-tab-height);
+        background-color: #252526;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        z-index: 1000;
+        overflow-x: auto;
+        border-bottom: 1px solid #3c3c3c;
+    }
+    .editor-tab {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        background-color: #2d2d2d;
+        color: #cccccc;
+        cursor: pointer;
+        border-right: 1px solid #3c3c3c;
+        font-size: 13px;
+        transition: background-color 0.2s;
+        min-width: 100px;
+        max-width: 200px;
+    }
+    .editor-tab:hover {
+        background-color: #383838;
+    }
+    .editor-tab.active {
+        background-color: #1e1e1e;
+        border-bottom: 2px solid #0e639c;
+    }
+    .editor-tab .tab-name {
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .editor-tab .tab-close {
+        margin-left: 8px;
+        font-size: 16px;
+        color: #888;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .editor-tab .tab-close:hover {
+        color: #fff;
+    }
+    .add-file-btn {
+        background-color: transparent;
+        border: none;
+        color: #888;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: color 0.2s;
+    }
+    .add-file-btn:hover {
+        color: #fff;
+    }
+    /* AI Chat Panel in Editor - Right Sidebar */
+    #editorAiPanel {
+        position: fixed;
+        top: var(--editor-header-height);
+        right: 0;
+        width: 350px;
+        height: calc(100% - var(--editor-header-height));
+        background-color: #1e1e1e;
+        border-left: 1px solid #3c3c3c;
+        z-index: 1001;
+        display: flex;
+        flex-direction: column;
+    }
+    #editorAiPanel.collapsed {
+        width: 40px;
+    }
+    #editorAiPanel.collapsed .ai-chat-header {
+        cursor: pointer;
+        flex-direction: column;
+        padding: 12px 8px;
+    }
+    #editorAiPanel.collapsed .ai-chat-header span,
+    #editorAiPanel.collapsed .ai-chat-header button,
+    #editorAiPanel.collapsed .ai-chat-messages,
+    #editorAiPanel.collapsed .ai-chat-input {
+        display: none;
+    }
+    #editorAiPanel.collapsed .ai-chat-header i.fa-robot {
+        margin: 0;
+        font-size: 18px;
+    }
+    #editorAiPanel .ai-chat-header {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: #252526;
+        border-bottom: 1px solid #3c3c3c;
+    }
+    #editorAiPanel .ai-chat-header span {
+        color: #cccccc;
+        font-size: 13px;
+        flex-grow: 1;
+    }
+    #editorAiPanel .ai-chat-header button {
+        background: transparent;
+        border: none;
+        color: #888;
+        cursor: pointer;
+        padding: 4px 8px;
+    }
+    #editorAiPanel .ai-chat-header button:hover {
+        color: #fff;
+    }
+    #editorAiPanel .ai-chat-messages {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 12px;
+    }
+    #editorAiPanel .ai-message {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+    #editorAiPanel .ai-message.user {
+        background-color: #0e639c;
+        color: #fff;
+    }
+    #editorAiPanel .ai-message.assistant {
+        background-color: #2d2d2d;
+        color: #cccccc;
+    }
+    #editorAiPanel .ai-chat-input {
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        gap: 8px;
+        border-top: 1px solid #3c3c3c;
+    }
+    #editorAiPanel .ai-chat-input input {
+        width: 100%;
+        background-color: #3c3c3c;
+        border: 1px solid #5c5c5c;
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+    }
+    #editorAiPanel .ai-chat-input input:focus {
+        outline: none;
+        border-color: #0e639c;
+    }
+    #editorAiPanel .ai-chat-input input::placeholder {
+        color: #888;
+    }
+    #editorAiPanel .ai-chat-input button {
+        background-color: #0e639c;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        width: 100%;
+    }
+    #editorAiPanel .ai-chat-input button:hover {
+        background-color: #1177bb;
+    }
+    #editorAiPanel .ai-chat-input button:disabled {
+        background-color: #5c5c5c;
+        cursor: not-allowed;
+    }
+    #editorAiPanel .ai-loading {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
 </style>
 <body class="relative bg-gray-100" >
     <div id="app" tabindex="-1" style="outline: none;" @keydown="event => { if (!['INPUT', 'TEXTAREA'].includes(event.target.tagName)) event.preventDefault(); }">
@@ -185,7 +413,7 @@ input::-ms-reveal {
             <div class="w-full max-w-xs relative" >
               
                 <div class="progress-circle w-6 h-6 mr-2" :class="{ hidden: !isLoading }"></div>
-                <div v-if="variants.length > 0" class="flex justify-center mb-2">
+                <div v-if="variants.length > 1" class="flex justify-center mb-2">
                     <button 
                         v-for="(variant, index) in variants" 
                         :key="index"
@@ -201,7 +429,7 @@ input::-ms-reveal {
                         }"
                         :disabled="variant.processing">
                         <i v-if="index === 0" class='fas fa-undo'></i>
-                        <span v-else>{{ index }}</span>
+                        <span v-else>AI</span>
                     </button>
                 </div>
                 <div class="flex items-center">
@@ -230,7 +458,6 @@ input::-ms-reveal {
         <button id="show-3d-picker" class="fixed top-16 left-4 transform bg-transparent border-none z-50" onclick="picker.openModelPicker()">
             <i class="fas fa-cube" style="font-size: 24px; color: #000;"></i>
         </button>
-   
     </div>
     
     <!-- Add this new div for the context menu -->
@@ -238,8 +465,11 @@ input::-ms-reveal {
         <button id="copyCoordinates" class="w-full text-left hover:bg-gray-100 px-2 py-1 rounded">Copy 3D Coordinates</button>                
     </div>
     <div id="editorApp" >
-        <button id="toggleEditor" class="fixed top-16 right-4 transform bg-transparent border-none z-50" @click="toggleEditor">
+        <button id="toggleEditor" class="fixed top-28 left-4 transform bg-transparent border-none z-50" @click="toggleEditor">
             <i class="fas fa-code" style="font-size: 24px; color: #000;"></i>
+        </button>
+        <button id="toggleEruda" class="fixed top-40 left-4 transform bg-transparent border-none z-50" onclick="eruda.show()">
+            <i class="fas fa-terminal" style="font-size: 24px; color: #000;"></i>
         </button>
         <button id="runCode" class="fixed top-28 right-4 transform bg-transparent border-none z-50" @click="runCode">
             <i class="fas fa-play" style="font-size: 24px; color: #000;"></i>
@@ -256,7 +486,55 @@ input::-ms-reveal {
                 </button>
                 <span class="editor-title">Code Editor</span>
             </div>
-            <div id="editorElement" style="position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);"></div>
+            <div id="editorTabBar">
+                <div 
+                    v-for="(file, index) in files" 
+                    :key="index"
+                    class="editor-tab"
+                    :class="{ active: currentFileIndex === index }"
+                    @click="switchFile(index)"
+                >
+                    <span class="tab-name">{{ getFileName(file, index) }}</span>
+                    <span 
+                        v-if="files.length > 1"
+                        class="tab-close" 
+                        @click.stop="removeFile(index)"
+                        title="Close file"
+                    >&times;</span>
+                </div>
+                <button class="add-file-btn" @click="addNewFile" title="Add new file">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="editorElement" style="position: fixed; top: var(--editor-header-height); left: 0; width: calc(100% - 350px); height: calc(100% - var(--editor-header-height));"></div>
+            <div id="editorAiPanel" :class="{ collapsed: !showAiPanel }">
+                <div class="ai-chat-header" @click="!showAiPanel ? toggleAiPanel() : null">
+                    <i class="fas fa-robot" style="color: #0e639c; margin-right: 8px;"></i>
+                    <span>AI Assistant</span>
+                    <button @click.stop="toggleAiPanel" :title="showAiPanel ? 'Collapse' : 'Expand'">
+                        <i :class="showAiPanel ? 'fas fa-chevron-right' : 'fas fa-chevron-left'"></i>
+                    </button>
+                </div>
+                <div class="ai-chat-messages" v-show="showAiPanel">
+                    <div v-for="(msg, index) in aiMessages" :key="index" class="ai-message" :class="msg.role">
+                        {{ msg.content }}
+                    </div>
+                </div>
+                <div class="ai-chat-input" v-show="showAiPanel">
+                    <input 
+                        type="text" 
+                        v-model="aiInput" 
+                        :placeholder="aiLoading ? 'AI is thinking...' : 'Ask AI to edit your code...'"
+                        @keyup.enter="sendAiMessage"
+                        :disabled="aiLoading"
+                    />
+                    <button @click="sendAiMessage" :disabled="aiLoading || !aiInput.trim()">
+                        <span v-if="aiLoading" class="ai-loading"></span>
+                        <i v-else class="fas fa-paper-plane"></i>
+                        <span>{{ aiLoading ? 'Sending...' : 'Send' }}</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     <script src="https://unpkg.com/typescript@latest/lib/typescript.js"></script>

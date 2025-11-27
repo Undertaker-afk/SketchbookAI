@@ -47,12 +47,20 @@ async function Eval(content)
 
 var originalConsoleError = console.error;
 console.error = (...args) => {
+    // Ignore pointer lock errors
     if (args[0].message === "The user has exited the lock before this request was completed." || 
         args[0].message === "If you see this error we have a bug. Please report this bug to chromium.")
         return;
-    //wwwwif(args[0].message.includes("Uncaught TypeError: Cannot read properties of undefined (reading '_wakeUpAfterNarrowphase')")) return;
+    // Ignore physics engine errors
     if(args[0]?.message?.includes("Cannot read properties of undefined (reading '_wakeUpAfterNarrowphase')"))
         return;
+    // Ignore webpack-dev-server errors
+    if (args[0]?.message?.includes('webpack-dev-server') || 
+        args[0]?.type === 'error' && args[0]?.target?.constructor?.name === 'WebSocket' ||
+        (typeof args[0] === 'object' && args[0]?.isTrusted === true && !args[0]?.message)) {
+        originalConsoleError('[Webpack] Connection issue - ignoring');
+        return;
+    }
 
     if (globalThis.chat) {
      //   if (settings?.enableBreakpoints)
@@ -92,10 +100,23 @@ function ParseCodeLineFromError(code, error) {
 }
 
 window.addEventListener('unhandledrejection', function(event) {
+    // Ignore webpack-related rejections
+    if (event.reason?.message?.includes('webpack') || 
+        event.reason?.target?.constructor?.name === 'WebSocket') {
+        event.preventDefault();
+        return;
+    }
     console.error(event.reason);
     event.preventDefault();
 });
 window.addEventListener('error', function (event) {
+    // Ignore webpack-dev-server errors
+    if (event.message?.includes('webpack-dev-server') ||
+        event.target?.constructor?.name === 'WebSocket' ||
+        (event.isTrusted && !event.message && event.type === 'error')) {
+        event.preventDefault();
+        return;
+    }
     console.error(event);
 });
 
