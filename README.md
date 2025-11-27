@@ -61,9 +61,9 @@ https://github.com/user-attachments/assets/624d1793-f9e5-4734-ad86-9dfec28250da
 
 ## Quick Start
 
-**🎮 Live Demo**: [Play Online](https://{username}.github.io/sketchbook/)
+**🎮 Live Demo**: [Play Online](https://friuns2.github.io/sketchbook/)
 
-**📱 Download APK**: [Latest Release](https://github.com/{username}/Sketchbook/releases/latest)
+**📱 Download APK**: [Latest Release](https://github.com/friuns2/Sketchbook/releases/latest)
 
 ### Local Development
 
