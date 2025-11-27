@@ -29,18 +29,6 @@ let chat = {
     window: window,
     globalThis: globalThis,
     document: document,
-    suggestions: [
-        ['Add a red cube'],
-        ['Add a pistol', 'Add aiming mechanics for better shooting'],
-        ['spawn zombies randomly', 'Make zombies that can chase and attack the player', 'Make the zombies take damage and die'],
-        ['add football','add goal','add npc that tries to get ball into goal'],
-        ['add mickey mouse','make so i can talk to using dialog boxes'],
-        ['place trees','place grass','add cows','make cows eat grass'],
-        ['add lambourgini', 'setup car doors and wheels'],
-        ['add second player','make the second player use different keys', 'make the second player shoot'],
-        ['create car with rocket launcher on top', 'create the bullets that the launcher shoots', 'make the bullets explode on impact'],
-        ['I want the player to shoot bullets from the rocket launcher.','bullets should explode when they hit something','change the explosion to be more visually impressive.'], 
-        ['create cubes with left mouse button', 'remove cubes with right mouse button','add physics to cubes'], 'make pistol shoot, bullets, kill zombie when hit'],
     get isLoading(){ 
         return this.abortController && !this.abortController.signal.aborted
      },
@@ -99,13 +87,6 @@ let chat = {
         document.addEventListener('click', this.hideContextMenu.bind(this));
 
     },
-    async SetSuggestion(suggestion) {
-        this.inputText = '';
-        for (let char of suggestion) {
-            this.inputText += char;
-            await new Promise(resolve => setTimeout(resolve, 30)); // Adjust the delay as needed for typing effect
-        }
-    },
     UploadFile() {
         const input = document.createElement('input');
         input.type = 'file';
@@ -142,15 +123,6 @@ let chat = {
     floatingCode: '',
     //#region sendInput
     async sendInput() {
-        let index = this.suggestions.findIndex(s => Array.isArray(s) && s.includes(this.inputText));
-        if(index != -1)
-        {
-            this.suggestions[index].shift();
-            this.suggestions.push(this.suggestions[index]);
-            this.suggestions.splice(index, 1);
-        }
-        
-
         this.params.lastText = this.inputText || this.params.lastText;
         if (!this.inputText) {
             document.activeElement?.blur?.();

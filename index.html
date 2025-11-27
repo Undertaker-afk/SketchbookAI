@@ -206,10 +206,7 @@ input::-ms-reveal {
                 </div>
                 <div class="flex items-center">
                     <div class="relative flex-grow">
-                        <input type="text" id="gpt-input" v-model="inputText" :placeholder="params.lastText || 'What would you like to create?'" class="input input-bordered w-full max-w-xs pr-10" list="suggestions" @keyup.enter=" sendInput()" />
-                        <datalist id="suggestions">
-                            <option v-for="suggestion in suggestions" :value="Array.isArray(suggestion) ? suggestion[0] : suggestion"></option>
-                        </datalist>
+                        <input type="text" id="gpt-input" v-model="inputText" :placeholder="params.lastText || 'What would you like to create?'" class="input input-bordered w-full max-w-xs pr-10" @keyup.enter=" sendInput()" />
                         <button id="stop-button" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-transparent border-none" v-if="isLoading" @click="abortController?.abort()">
                             <i class="fas fa-stop"></i>
                         </button>

@@ -126,7 +126,7 @@ You can edit code directly on GitHub using these AI-powered tools:
 
 1. **GitHub Copilot** (github.com/copilot)
    - Edit files directly in your browser on GitHub.com
-   - AI suggestions appear as you type
+    - Inline completions appear as you type
    - Commit changes directly to trigger automatic build
 
 2. **Cursor Web Agent** (cursor.com)
