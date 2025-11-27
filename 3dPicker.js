@@ -1,3 +1,4 @@
+// all tokens
 let tokens = new Set([
     "4351796cf6b8414498e5db4f437be245",
     "ff794bcac8d249328798f40cd621c5d2",
@@ -80,4 +81,5 @@ let picker= {
 picker = new Vue({
     el: '#picker',
     data: picker
+
 });
