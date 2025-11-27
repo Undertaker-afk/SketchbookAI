@@ -5,13 +5,13 @@ require.config({
 });
 
 var codeEditor;
+var fileCounter = 0; // Counter for unique file names
 
 window.editorApp = new Vue({
     el: '#editorApp',
     data: {
         showEditor: true,
         currentFileIndex: 0,
-        editorModels: [], // Store Monaco models for each file
     },
     computed: {
         files() {
@@ -90,40 +90,10 @@ window.editorApp = new Vue({
                 this.syncModelsToFiles();
             }
         },
-        syncModelsToFiles() {
-            // Sync editor models with current files
-            if (!codeEditor || !this.files.length) return;
-            
-            // Create or update models for each file
-            this.files.forEach((file, index) => {
-                const uri = monaco.Uri.parse(`file:///script${index}.ts`);
-                let model = monaco.editor.getModel(uri);
-                if (!model) {
-                    model = monaco.editor.createModel(
-                        "export {};" + replaceImports(file.content || ''),
-                        'typescript',
-                        uri
-                    );
-                    this.editorModels[index] = model;
-                }
-            });
-            
-            // Switch to current file
-            this.switchFile(this.currentFileIndex);
-        },
-        switchFile(index) {
-            if (!codeEditor || !this.files[index]) return;
-            
-            // Save current file content before switching
-            if (this.files[this.currentFileIndex]) {
-                this.files[this.currentFileIndex].content = codeEditor.getValue().replaceAll("export {}", "");
-            }
-            
-            this.currentFileIndex = index;
-            const file = this.files[index];
-            
-            // Get or create model for this file
-            const uri = monaco.Uri.parse(`file:///script${index}.ts`);
+        // Helper method to get or create a Monaco model for a file
+        getOrCreateModel(file) {
+            const fileName = file.name || 'script.ts';
+            const uri = monaco.Uri.parse(`file:///${fileName}`);
             let model = monaco.editor.getModel(uri);
             if (!model) {
                 model = monaco.editor.createModel(
@@ -131,14 +101,42 @@ window.editorApp = new Vue({
                     'typescript',
                     uri
                 );
-                this.editorModels[index] = model;
+            }
+            return model;
+        },
+        syncModelsToFiles() {
+            // Sync editor models with current files
+            if (!codeEditor || !this.files.length) return;
+            
+            // Create models for each file if they don't exist
+            this.files.forEach(file => this.getOrCreateModel(file));
+            
+            // Switch to current file
+            this.switchFile(this.currentFileIndex);
+        },
+        // Helper method to get the current editor content without export statement
+        getCurrentEditorContent() {
+            return codeEditor.getValue().replaceAll("export {}", "");
+        },
+        switchFile(index) {
+            if (!codeEditor || !this.files[index]) return;
+            
+            // Save current file content before switching
+            if (this.files[this.currentFileIndex]) {
+                this.files[this.currentFileIndex].content = this.getCurrentEditorContent();
             }
             
+            this.currentFileIndex = index;
+            const file = this.files[index];
+            
+            // Get or create model for this file
+            const model = this.getOrCreateModel(file);
             codeEditor.setModel(model);
         },
         addNewFile() {
-            const newFileName = `script${this.files.length}.ts`;
-            const newFile = new VariantFile(newFileName, '// New script file\n');
+            fileCounter++;
+            const newFileName = `script${fileCounter}.ts`;
+            const newFile = new VariantFile(newFileName, '// New TypeScript script file\n');
             this.files.push(newFile);
             this.syncModelsToFiles();
             this.switchFile(this.files.length - 1);
@@ -146,27 +144,28 @@ window.editorApp = new Vue({
         removeFile(index) {
             if (this.files.length <= 1) return; // Keep at least one file
             
-            // Dispose the model
-            const uri = monaco.Uri.parse(`file:///script${index}.ts`);
+            const file = this.files[index];
+            const fileName = file.name || 'script.ts';
+            const uri = monaco.Uri.parse(`file:///${fileName}`);
             const model = monaco.editor.getModel(uri);
             if (model) {
                 model.dispose();
             }
             
             this.files.splice(index, 1);
-            this.editorModels.splice(index, 1);
             
             // Adjust current file index if needed
             if (this.currentFileIndex >= this.files.length) {
                 this.currentFileIndex = this.files.length - 1;
             }
             
-            this.syncModelsToFiles();
+            // Switch to a valid file
+            this.switchFile(this.currentFileIndex);
         },
         runCode() {
             // Save current file content
             if (this.files[this.currentFileIndex]) {
-                this.files[this.currentFileIndex].content = codeEditor.getValue().replaceAll("export {}", "");
+                this.files[this.currentFileIndex].content = this.getCurrentEditorContent();
             }
             
             ResetState();            

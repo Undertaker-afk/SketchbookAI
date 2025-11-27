@@ -138,7 +138,7 @@ let chat = {
     async Clear() {
         this.variant.content = '';
         const scriptContent = await fetch("src/" + settings.codeFile).then(response => response.text());
-        this.variant.files = [new VariantFile('script.js', scriptContent)];
+        this.variant.files = [new VariantFile('script.ts', scriptContent)];
     },
     floatingCode: '',
     //#region sendInput
@@ -269,7 +269,7 @@ let chat = {
             let botMessage = new BotMessage();
             botMessage.model = model;
             botMessage.processing = true;
-            this.variants[1] = botMessage;
+            this.variants.push(botMessage); // Add AI response as second variant (index 1)
 
             for (let retry = 0; retry < 5; retry++) {
                 const response = await getChatGPTResponse({

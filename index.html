@@ -14,6 +14,11 @@
     
 </head>
 <style>
+:root {
+    --editor-menu-height: 40px;
+    --editor-tab-height: 40px;
+    --editor-header-height: calc(var(--editor-menu-height) + var(--editor-tab-height));
+}
 /* Styles for dat.gui save-row */
 .dg .save-row {
     background-color: #1a1a1a !important;
@@ -122,7 +127,7 @@ input::-ms-reveal {
         top: 0;
         left: 0;
         width: 100%;
-        height: 40px;
+        height: var(--editor-menu-height);
         background-color: #1e1e1e;
         border-bottom: 1px solid #3c3c3c;
         display: flex;
@@ -162,10 +167,10 @@ input::-ms-reveal {
     /* Editor tab bar styles */
     #editorTabBar {
         position: fixed;
-        top: 40px;
+        top: var(--editor-menu-height);
         left: 0;
         width: 100%;
-        height: 40px;
+        height: var(--editor-tab-height);
         background-color: #252526;
         display: flex;
         align-items: center;
@@ -342,7 +347,7 @@ input::-ms-reveal {
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
-            <div id="editorElement" style="position: fixed; top: 80px; left: 0; width: 100%; height: calc(100% - 80px);"></div>
+            <div id="editorElement" style="position: fixed; top: var(--editor-header-height); left: 0; width: 100%; height: calc(100% - var(--editor-header-height));"></div>
         </div>
     </div>
     <script src="https://unpkg.com/typescript@latest/lib/typescript.js"></script>
