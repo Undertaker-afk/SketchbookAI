@@ -1,5 +1,7 @@
 # Sketchbook
 
+[![Deploy to GitHub Pages](https://github.com/Undertaker-afk/SketchbookAI/actions/workflows/deploy.yml/badge.svg)](https://github.com/Undertaker-afk/SketchbookAI/actions/workflows/deploy.yml)
+
 <div align="center">
 
 ![Sketchbook Banner](https://github.com/user-attachments/assets/c269e842-af3a-4074-90cd-7d830c08ddbf)
