@@ -150,18 +150,6 @@ settings.apiUrl = "https://openrouter.ai/api/v1/chat/completions";  // API endpo
 settings.apiKey = "your-api-key-here";  // Your API key
 ```
 
-### Supported API Providers
-
-- **OpenRouter**: Use OpenRouter API keys with their endpoint
-- **Gemini**: Built-in support for Gemini models (gemini-1.5-flash-latest, gemini-1.5-pro-latest)
-- **Hugging Face**: Use keys starting with `hf_` for Hugging Face Inference endpoints
-
-Default models available in `src/settings.js`:
-- `gemini-1.5-pro-exp-0801`
-- `gemini-1.5-pro-latest`
-- `gemini-1.5-flash-latest`
-- `gpt-4o-mini`
-
 ## Build
 
 ```bash
