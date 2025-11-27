@@ -190,7 +190,11 @@ function SaveState() {
         return id;
     };    
 
-    globalThis.ResetState = function() {    
+    globalThis.ResetState = function() {
+        if (!snapshot) {
+            console.warn('ResetState called before SaveState - skipping');
+            return;
+        }
         appendedElements.forEach(element => element.parentNode?.removeChild(element));
         appendedElements.clear();
         world.graphicsWorld.children.length = 0;
