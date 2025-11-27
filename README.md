@@ -61,6 +61,12 @@ https://github.com/user-attachments/assets/624d1793-f9e5-4734-ad86-9dfec28250da
 
 ## Quick Start
 
+**🎮 Live Demo**: [Play Online](https://{username}.github.io/sketchbook/)
+
+**📱 Download APK**: [Latest Release](https://github.com/{username}/Sketchbook/releases/latest)
+
+### Local Development
+
 ```bash
 # Install dependencies
 npm install
@@ -70,6 +76,50 @@ npm run dev
 ```
 
 Open http://localhost:8080 in your browser.
+
+## 🤖 Update Without a PC - AI-Powered Development
+
+This project features **automated GitHub Actions** that compile and publish your code automatically on every push. You can develop and update the entire project from anywhere using AI coding assistants - no local PC setup required!
+
+### How It Works
+
+The GitHub Actions workflow automatically:
+- ✅ Builds the web application
+- ✅ Compiles signed Android APK
+- ✅ Generates Android App Bundle (AAB) for Google Play
+- ✅ Creates a GitHub Release with downloadable artifacts
+- ✅ Deploys to GitHub Pages (if configured)
+
+**Triggered on**: Every push to `master` branch or manual workflow dispatch
+
+### Update from Anywhere with AI Assistants
+
+You can edit code directly on GitHub using these AI-powered tools:
+
+1. **GitHub Copilot** (github.com/copilot)
+   - Edit files directly in your browser on GitHub.com
+   - AI suggestions appear as you type
+   - Commit changes directly to trigger automatic build
+
+2. **Cursor Web Agent** (cursor.com)
+   - Use Cursor's web interface to edit GitHub repositories
+   - Full AI assistance with context awareness
+   - Push changes to automatically trigger builds
+
+3. **Google Jules** (jules.google.com)
+   - Google's AI coding assistant
+   - Can directly interact with GitHub repositories
+   - Make changes that automatically trigger the build pipeline
+
+### Workflow Steps
+
+1. **Make changes** using any AI assistant (or GitHub's web editor)
+2. **Commit to master** branch
+3. **Automatic build** starts via GitHub Actions
+4. **Download APK** from the new release (appears in ~5-10 minutes)
+5. **Install on device** or publish to Google Play Store
+
+No local development environment needed - code, compile, and deploy all from the cloud! 🚀
 
 ## Running Tests
 
