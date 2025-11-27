@@ -159,6 +159,69 @@ input::-ms-reveal {
         margin-left: 10px;
         flex-grow: 1;
     }
+    /* Editor tab bar styles */
+    #editorTabBar {
+        position: fixed;
+        top: 40px;
+        left: 0;
+        width: 100%;
+        height: 40px;
+        background-color: #252526;
+        display: flex;
+        align-items: center;
+        padding: 0;
+        z-index: 1000;
+        overflow-x: auto;
+        border-bottom: 1px solid #3c3c3c;
+    }
+    .editor-tab {
+        display: flex;
+        align-items: center;
+        padding: 8px 16px;
+        background-color: #2d2d2d;
+        color: #cccccc;
+        cursor: pointer;
+        border-right: 1px solid #3c3c3c;
+        font-size: 13px;
+        transition: background-color 0.2s;
+        min-width: 100px;
+        max-width: 200px;
+    }
+    .editor-tab:hover {
+        background-color: #383838;
+    }
+    .editor-tab.active {
+        background-color: #1e1e1e;
+        border-bottom: 2px solid #0e639c;
+    }
+    .editor-tab .tab-name {
+        flex-grow: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .editor-tab .tab-close {
+        margin-left: 8px;
+        font-size: 16px;
+        color: #888;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .editor-tab .tab-close:hover {
+        color: #fff;
+    }
+    .add-file-btn {
+        background-color: transparent;
+        border: none;
+        color: #888;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: color 0.2s;
+    }
+    .add-file-btn:hover {
+        color: #fff;
+    }
 </style>
 <body class="relative bg-gray-100" >
     <div id="app" tabindex="-1" style="outline: none;" @keydown="event => { if (!['INPUT', 'TEXTAREA'].includes(event.target.tagName)) event.preventDefault(); }">
@@ -185,7 +248,7 @@ input::-ms-reveal {
             <div class="w-full max-w-xs relative" >
               
                 <div class="progress-circle w-6 h-6 mr-2" :class="{ hidden: !isLoading }"></div>
-                <div v-if="variants.length > 0" class="flex justify-center mb-2">
+                <div v-if="variants.length > 1" class="flex justify-center mb-2">
                     <button 
                         v-for="(variant, index) in variants" 
                         :key="index"
@@ -201,7 +264,7 @@ input::-ms-reveal {
                         }"
                         :disabled="variant.processing">
                         <i v-if="index === 0" class='fas fa-undo'></i>
-                        <span v-else>{{ index }}</span>
+                        <span v-else>AI</span>
                     </button>
                 </div>
                 <div class="flex items-center">
@@ -259,7 +322,27 @@ input::-ms-reveal {
                 </button>
                 <span class="editor-title">Code Editor</span>
             </div>
-            <div id="editorElement" style="position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px);"></div>
+            <div id="editorTabBar">
+                <div 
+                    v-for="(file, index) in files" 
+                    :key="index"
+                    class="editor-tab"
+                    :class="{ active: currentFileIndex === index }"
+                    @click="switchFile(index)"
+                >
+                    <span class="tab-name">{{ getFileName(file, index) }}</span>
+                    <span 
+                        v-if="files.length > 1"
+                        class="tab-close" 
+                        @click.stop="removeFile(index)"
+                        title="Close file"
+                    >&times;</span>
+                </div>
+                <button class="add-file-btn" @click="addNewFile" title="Add new file">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            <div id="editorElement" style="position: fixed; top: 80px; left: 0; width: 100%; height: calc(100% - 80px);"></div>
         </div>
     </div>
     <script src="https://unpkg.com/typescript@latest/lib/typescript.js"></script>

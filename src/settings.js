@@ -10,8 +10,6 @@ let settings = {
     localSrc: "C:/Users/friuns/Documents/Sketchbook/src/main/examples",
     codeFile:  "./main/examples/module.ts" ,
     batchRequests:[
-        "grok-code",
-        "big-pickle",
         "grok-code"
     ]
 /*

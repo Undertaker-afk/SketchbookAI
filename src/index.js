@@ -8,6 +8,7 @@ class VariantFile {
         Vue.observable(this);
     }
 }
+globalThis.VariantFile = VariantFile;
 
 class BotMessage {
     constructor() {
@@ -57,7 +58,7 @@ let chat = {
     get isMobile() {
         return window.innerWidth < 768;
     },
-    variants: [new BotMessage(), new BotMessage()],
+    variants: [new BotMessage()],
     currentVariant: 0,
     get variant() {
         return this.variants[this.currentVariant];
@@ -246,94 +247,68 @@ let chat = {
                 .map(msg => msg.user)
                 .join('\n') + "\n</Previous_user_messages>");
             
+            // Prepare current script files context (all files, not just the first one)
+            const currentScriptFiles = this.variant.files.map((file, index) => 
+                `<current_script name="${file.name || `script${index}.ts`}">\n${file.content}\n</current_script>`
+            ).join('\n\n');
+
+            // Fetch documentation files for context
+            const docFiles = [
+                'wiki/API-Reference.md',
+                'wiki/Examples.md'
+            ];
+            const documentationContext = await fetchAndProcessFilesCombined(docFiles).catch(() => '');
+
             this.variants[0] = this.variant;
             this.currentVariant = 0;
             this.variants.length = 1;
-            let updateLock = Promise.resolve();
-            let abort = false;
             this.floatingCode = '';
+
             //#region SendMessage
-            let SendMessage = async (model,i) => {
-                i++;
-                let code = i == 1 ? this.variants[0].files[0].content : this.variant.files[0].content;
-                let botMessage = new BotMessage();
-                    botMessage.model = model;
-                    botMessage.processing = true;
-                    this.variants[i] = botMessage;
-                for (let retry = 0; retry < 5; retry++)
-                {
-                    const response = await getChatGPTResponse({
-                        model,
-                        apiKey: settings.apiKey,
-                        apiUrl: settings.apiUrl,
-                        messages: [
-                            //    { role: "system", content: settings.rules  },
-                            //{ role: "assistant", content: `When user says: spawn or add object, then spawn it at near player position: ${playerLookPoint}` },
-                            { role: "system", content: "Note: examples are not included in source code\n" + await fetchAndProcessFilesCombined(examples) },
-                            {
-                                role: "system", content:
-                                    await fetchAndProcessFilesCombined(srcFiles) +
-                                    //  "\nNote: examples are not included in source code\n"+
-                                    //  await fetchAndProcessFiles(examples) +
-                                    Object.entries(glbFiles).map(([name, file]) => `<file name="${name}">\n${file.content}\n</file>`).join('\n\n')
-                            },
-                            //...(await fetchAndProcessFiles(srcTsFiles)).map(a => ({ role: "system", content: `<file name="${a.name}">\n${a.content}\n</file>` })),                        
-                            { role: "user", content: `${previousUserMessages}\n\nCurrent code:\n\`\`\`typescript\n${code}\n\`\`\`\n\n${settings.importantRules}Rewrite current code to accomplish user complain: ${this.params.lastText}` },
-                            //{ role: "user", content: `Improve last user complain create plan how you would implement it` },
-                            //{ role: "user", content: `Reflect write chain of though how you failed to implement code and what you need to implement it correctly` },
+            const model = settings.batchRequests[0] || "grok-code";
+            let botMessage = new BotMessage();
+            botMessage.model = model;
+            botMessage.processing = true;
+            this.variants[1] = botMessage;
 
-                            //Understanding the Problem,Thinking through a Solution, breakdown of the challenges
-                        ],
-                        signal: abortController.signal
-                    });
-
-                    try {
-                        for await (const chunk of response) {
-                            botMessage.content = chunk.message.content;
-                            if (this.currentVariant ==1)
-                                this.floatingCode = botMessage.content;
-                        }
-                        if(!botMessage.content) continue;
-                    } catch (e) {
-                        console.log(e);
-                        continue;
-                        botMessage.lastError = e;
-                        return;
-                    }
-                    break;
-                }
-                botMessage.processing = false;
-                console.log(botMessage.content);
-
-
-                updateLock = updateLock.then(async () => {
-
-                    if (abort)
-                        return;
-                    
-                    let variant = this.variants[i];
-                    //#region SwitchVariant
-                    try{
-                        await this.switchVariant(i);
-                    }
-                    catch(e)
-                    {
-                        console.error(e);
-                        
-                    }
-                    //#endregion
-                    let startTime = Date.now();
-                    while (!variant.lastError && Date.now() - startTime < 1500) {
-                        await new Promise(requestAnimationFrame);
-                    }
-                    if (!variant.lastError)
-                        abort = true;
+            for (let retry = 0; retry < 5; retry++) {
+                const response = await getChatGPTResponse({
+                    model,
+                    apiKey: settings.apiKey,
+                    apiUrl: settings.apiUrl,
+                    messages: [
+                        { role: "system", content: "Note: examples are not included in source code\n" + await fetchAndProcessFilesCombined(examples) },
+                        {
+                            role: "system", content:
+                                await fetchAndProcessFilesCombined(srcFiles) +
+                                Object.entries(glbFiles).map(([name, file]) => `<file name="${name}">\n${file.content}\n</file>`).join('\n\n')
+                        },
+                        { role: "system", content: "<documentation>\n" + documentationContext + "\n</documentation>" },
+                        { role: "user", content: `${previousUserMessages}\n\nCurrent script files:\n${currentScriptFiles}\n\n${settings.importantRules || ''}Rewrite current code to accomplish user request: ${this.params.lastText}` },
+                    ],
+                    signal: abortController.signal
                 });
 
-            };
-            //#endregion
-            //#region SendMessages
-            await Promise.all(settings.batchRequests.map((model,i) => SendMessage(model, i)));
+                try {
+                    for await (const chunk of response) {
+                        botMessage.content = chunk.message.content;
+                        this.floatingCode = botMessage.content;
+                    }
+                    if (!botMessage.content) continue;
+                } catch (e) {
+                    console.log(e);
+                    continue;
+                }
+                break;
+            }
+            botMessage.processing = false;
+            console.log(botMessage.content);
+
+            try {
+                await this.switchVariant(1);
+            } catch (e) {
+                console.error(e);
+            }
             //#endregion
 
             console.log(chat.floatingCode)

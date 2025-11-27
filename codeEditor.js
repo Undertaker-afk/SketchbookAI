@@ -10,6 +10,13 @@ window.editorApp = new Vue({
     el: '#editorApp',
     data: {
         showEditor: true,
+        currentFileIndex: 0,
+        editorModels: [], // Store Monaco models for each file
+    },
+    computed: {
+        files() {
+            return chat?.variant?.files || [];
+        }
     },
     mounted() {
         this.initializeEditor();
@@ -79,12 +86,94 @@ window.editorApp = new Vue({
         },
         toggleEditor() {
             this.showEditor = !this.showEditor;
+            if (this.showEditor) {
+                this.syncModelsToFiles();
+            }
+        },
+        syncModelsToFiles() {
+            // Sync editor models with current files
+            if (!codeEditor || !this.files.length) return;
+            
+            // Create or update models for each file
+            this.files.forEach((file, index) => {
+                const uri = monaco.Uri.parse(`file:///script${index}.ts`);
+                let model = monaco.editor.getModel(uri);
+                if (!model) {
+                    model = monaco.editor.createModel(
+                        "export {};" + replaceImports(file.content || ''),
+                        'typescript',
+                        uri
+                    );
+                    this.editorModels[index] = model;
+                }
+            });
+            
+            // Switch to current file
+            this.switchFile(this.currentFileIndex);
+        },
+        switchFile(index) {
+            if (!codeEditor || !this.files[index]) return;
+            
+            // Save current file content before switching
+            if (this.files[this.currentFileIndex]) {
+                this.files[this.currentFileIndex].content = codeEditor.getValue().replaceAll("export {}", "");
+            }
+            
+            this.currentFileIndex = index;
+            const file = this.files[index];
+            
+            // Get or create model for this file
+            const uri = monaco.Uri.parse(`file:///script${index}.ts`);
+            let model = monaco.editor.getModel(uri);
+            if (!model) {
+                model = monaco.editor.createModel(
+                    "export {};" + replaceImports(file.content || ''),
+                    'typescript',
+                    uri
+                );
+                this.editorModels[index] = model;
+            }
+            
+            codeEditor.setModel(model);
+        },
+        addNewFile() {
+            const newFileName = `script${this.files.length}.ts`;
+            const newFile = new VariantFile(newFileName, '// New script file\n');
+            this.files.push(newFile);
+            this.syncModelsToFiles();
+            this.switchFile(this.files.length - 1);
+        },
+        removeFile(index) {
+            if (this.files.length <= 1) return; // Keep at least one file
+            
+            // Dispose the model
+            const uri = monaco.Uri.parse(`file:///script${index}.ts`);
+            const model = monaco.editor.getModel(uri);
+            if (model) {
+                model.dispose();
+            }
+            
+            this.files.splice(index, 1);
+            this.editorModels.splice(index, 1);
+            
+            // Adjust current file index if needed
+            if (this.currentFileIndex >= this.files.length) {
+                this.currentFileIndex = this.files.length - 1;
+            }
+            
+            this.syncModelsToFiles();
         },
         runCode() {
+            // Save current file content
+            if (this.files[this.currentFileIndex]) {
+                this.files[this.currentFileIndex].content = codeEditor.getValue().replaceAll("export {}", "");
+            }
+            
             ResetState();            
-            const code = codeEditor.getValue();
-            chat.variant.files[0].content = code.replaceAll("export {}","");
-            setTimeout(() => Eval(code), 100);
+            // Run all files, with main file (index 0) being primary
+            const allCode = this.files.map(f => replaceImports(f.content)).join('\n\n');
+            chat.variant.files = this.files;
+            setTimeout(() => Eval(allCode), 100);
             this.toggleEditor();            
         },
         resizeEditor() {
@@ -92,6 +181,9 @@ window.editorApp = new Vue({
                 codeEditor.layout();
             }
         },
+        getFileName(file, index) {
+            return file.name || `script${index}.ts`;
+        }
     }
 });
 
