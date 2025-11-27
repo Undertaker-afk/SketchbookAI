@@ -72,7 +72,7 @@ window.editorApp = new Vue({
                     allowNonTsExtensions: true,
                 });
 
-                // Add Vue component for editor controls
+                // Add Vue component for editor controls important
                 this.toggleEditor();
 
             });
